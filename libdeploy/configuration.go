@@ -13,9 +13,7 @@ import (
 
 var timeFormat = "2006-01-02T15:04:05Z"
 
-type Config map[string]interface{}
-
-func ReadConfig(fileName string) (config Config, err error) {
+func ReadConfig(fileName string) (config map[string]interface{}, err error) {
 	blob, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return
@@ -26,7 +24,7 @@ func ReadConfig(fileName string) (config Config, err error) {
 	return
 }
 
-func SPrintConfig(config Config) (conf string, err error) {
+func SPrintConfig(config map[string]interface{}) (conf string, err error) {
 	buf := new(bytes.Buffer)
 	if err = toml.NewEncoder(buf).Encode(config); err != nil {
 		return
@@ -36,7 +34,7 @@ func SPrintConfig(config Config) (conf string, err error) {
 	return
 }
 
-func PrintConfig(config Config) (err error) {
+func PrintConfig(config map[string]interface{}) (err error) {
 	buf := new(bytes.Buffer)
 	if err = toml.NewEncoder(buf).Encode(config); err != nil {
 		return
@@ -46,7 +44,7 @@ func PrintConfig(config Config) (err error) {
 	return
 }
 
-func PutVariable(path string, config Config) (err error) {
+func PutVariable(path string, config map[string]interface{}) (err error) {
 	var full_path = "config"
 	var buffer, changer map[string]interface{}
 	var last_path string
@@ -104,10 +102,6 @@ func PutVariable(path string, config Config) (err error) {
 
 func CheckRequired(conf interface{}, fullPath []string) (errs []error) {
 	switch conf.(type) {
-	case Config:
-		for p, val := range conf.(Config) {
-			errs = append(errs, CheckRequired(val, append(fullPath, p))...)
-		}
 	case map[string]interface{}:
 		for p, val := range conf.(map[string]interface{}) {
 			errs = append(errs, CheckRequired(val, append(fullPath, p))...)
