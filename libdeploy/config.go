@@ -55,20 +55,23 @@ func PutVariable(path string, config Config) {
     for num, p := range variable_path {
         full_path = fmt.Sprintf("%s[%s]", full_path, p)
         if buffer == nil {
-            if num + 1 < len(variable_path) {
-                log.Printf("First we need %s\n", full_path)
+            if num + 1 < len(variable_path) { // first element
+                if config[p] == nil { // if no middle element
+                    config[p] = map[string]interface{}{}
+                }
                 buffer = config[p].(map[string]interface{})
-            } else {
-                log.Printf("We need just %s\n", full_path)
+            } else { // first and last
                 changer = config
                 last_path = p
             }
         } else {
-            if num + 1 < len(variable_path) {
-                log.Println(fmt.Sprintf("We need %s", full_path))
+            if num + 1 < len(variable_path) { // middle element
+                if buffer[p] == nil { // if no middle element
+                    buffer[p] = map[string]interface{}{}
+                }
                 buffer = buffer[p].(map[string]interface{})
                 fmt.Println(buffer)
-            } else {
+            } else { // last element
                 changer = buffer
                 last_path = p
             }
@@ -78,34 +81,32 @@ func PutVariable(path string, config Config) {
     if changer[last_path] != nil {
         switch t := changer[last_path].(type) {
         case time.Time:
-            log.Printf("Setting %s to time value %s", path, val)
             t, err := time.Parse(timeFormat, val)
             if err != nil {
                 log.Fatal("You shold specify time in format %s", timeFormat)
             }
 
             changer[last_path] = t
-            log.Printf("Setted, now %s = %s", path, changer[last_path])
         case int:
-            log.Printf("Setting %s to int value %s", path, val)
             i, err := strconv.Atoi(val)
             if err != nil {
                 log.Fatal(fmt.Sprintf("%s should be int!", path))
             }
 
             changer[last_path] = i
-            log.Printf("Setted, now %s = %s", path, changer[last_path])
         case string:
-            log.Printf("Setting %s to string value %s", path, val)
             changer[last_path] = val
-            log.Printf("Setted, now %s = %s", path, changer[last_path])
         default:
             log.Fatal(fmt.Sprintf("To set %s, value should be %T!", path, t))
         }
     } else {
         if t, err := time.Parse(timeFormat, val); err != nil {
             if i, err := strconv.Atoi(val); err != nil {
-                changer[last_path] = val
+                if r, err := strconv.ParseFloat(val, 64); err != nil {
+                    changer[last_path] = val // Cannot conver to any type, sujesting string
+                } else { // Converted to float
+                    changer[last_path] = r
+                }
             } else { // Converted to int
                 changer[last_path] = i
             }
