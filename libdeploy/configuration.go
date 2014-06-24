@@ -1,12 +1,12 @@
-package libdeploy
+package configuration
 
 import (
     "fmt"
-    "log"
     "strings"
     "io/ioutil"
     "strconv"
     "bytes"
+    "errors"
     "time"
     "github.com/BurntSushi/toml"
 )
@@ -15,38 +15,42 @@ var timeFormat = "2006-01-02T15:04:05Z"
 
 type Config map[string]interface{}
 
-func ReadConfig(fileName string) Config {
+func ReadConfig(fileName string) (config Config, err error) {
     blob, err := ioutil.ReadFile(fileName)
     if err != nil {
-        fmt.Println("Error!!!!")
-        panic(err)
+        return
     }
 
-    var config Config
     _, err = toml.Decode(string(blob), &config)
-    if err != nil {
-        fmt.Println("Error parsing toml!")
-        panic(err)
-    }
 
-    return config
+    return 
 }
 
-func PrintConfig(config Config) {
+func SPrintConfig(config Config) (conf string, err error) {
     buf := new(bytes.Buffer)
-    if err := toml.NewEncoder(buf).Encode(config); err != nil {
-        log.Fatal("Cannot print config! ", err)
+    if err = toml.NewEncoder(buf).Encode(config); err != nil {
+        return
+    }
+
+    conf = buf.String()
+    return
+}
+
+func PrintConfig(config Config) (err error) {
+    buf := new(bytes.Buffer)
+    if err = toml.NewEncoder(buf).Encode(config); err != nil {
+        return
     }
 
     fmt.Println(buf.String())
+    return
 }
 
-func PutVariable(path string, config Config) {
+func PutVariable(path string, config Config) (err error) {
     var full_path = "config"
     var buffer, changer map[string]interface{}
     var last_path string
 
-    log.Printf("setting %s\n", path)
     buf := strings.Split(path, ":")
     // FIXME add check that only one semicolon is used
     path = buf[0]
@@ -70,7 +74,6 @@ func PutVariable(path string, config Config) {
                     buffer[p] = map[string]interface{}{}
                 }
                 buffer = buffer[p].(map[string]interface{})
-                fmt.Println(buffer)
             } else { // last element
                 changer = buffer
                 last_path = p
@@ -83,27 +86,38 @@ func PutVariable(path string, config Config) {
         case time.Time:
             t, err := time.Parse(timeFormat, val)
             if err != nil {
-                log.Fatal("You shold specify time in format %s", timeFormat)
+                return err
             }
 
             changer[last_path] = t
         case int:
             i, err := strconv.Atoi(val)
             if err != nil {
-                log.Fatal(fmt.Sprintf("%s should be int!", path))
+                return err
             }
 
             changer[last_path] = i
+        case bool:
+            b, err := strconv.ParseBool(val)
+            if err != nil {
+                return err
+            }
+            changer[last_path] = b
         case string:
             changer[last_path] = val
         default:
-            log.Fatal(fmt.Sprintf("To set %s, value should be %T!", path, t))
+            err = errors.New(fmt.Sprintf("To set %s, value should be %T!", path, t))
+            return
         }
     } else {
         if t, err := time.Parse(timeFormat, val); err != nil {
             if i, err := strconv.Atoi(val); err != nil {
                 if r, err := strconv.ParseFloat(val, 64); err != nil {
-                    changer[last_path] = val // Cannot conver to any type, sujesting string
+                    if b, err := strconv.ParseBool(val); err != nil {
+                        changer[last_path] = val // Cannot conver to any type, sujesting string
+                    } else { // Converted to bool
+                        changer[last_path] = b
+                    }
                 } else { // Converted to float
                     changer[last_path] = r
                 }
@@ -114,4 +128,6 @@ func PutVariable(path string, config Config) {
             changer[last_path] = t
         }
     }
+     
+    return
 }

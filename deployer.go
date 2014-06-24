@@ -16,23 +16,28 @@ func (i *replacers) String() string {
 
 func (i *replacers) Set(value string) error {
     for _, val := range strings.Split(value,",") {
-        *i = append(*i, val)
+       *i = append(*i, val)
     }
     return nil
 }
 
 func main() {
-    log.Println("Hello!")
     var k replacers
     flag.Var(&k, "k", "Fields to replace")
     flag.Parse()
     var fn = flag.Args()
 
-    config := libdeploy.ReadConfig(fn[0])
-
-    for _, rep := range k {
-        libdeploy.PutVariable(rep, config)
+    config, err := configuration.ReadConfig(fn[0])
+    if err != nil {
+       log.Fatal("Cannot read config: ", err)
+       return
     }
 
-   libdeploy.PrintConfig(config) 
+    for _, rep := range k {
+       if err := configuration.PutVariable(rep, config); err != nil {
+          log.Fatal(fmt.Sprintf("Error during setting \"%s\":\t%+v", rep, err))
+       }
+    }
+
+    configuration.PrintConfig(config) 
 }
