@@ -131,3 +131,22 @@ func PutVariable(path string, config Config) (err error) {
 
 	return
 }
+
+func CheckRequired(conf interface{}, fullPath []string) (errs []error) {
+	switch conf.(type) {
+	case Config:
+		for p, val := range conf.(Config) {
+			errs = append(errs, CheckRequired(val, append(fullPath, p))...)
+		}
+	case map[string]interface{}:
+		for p, val := range conf.(map[string]interface{}) {
+			errs = append(errs, CheckRequired(val, append(fullPath, p))...)
+		}
+	default: // leaf
+		if conf == "[REQUIRED]" {
+			path := strings.Join(fullPath, ".")
+			errs = append(errs, errors.New(fmt.Sprintf("%s is reqired! Please set it by adding key -k %s:<value>", path, path)))
+		}
+	}
+	return
+}

@@ -1,8 +1,9 @@
-domain = "t1"
+domain = "[REQUIRED]"
  
 [meta]
-owner = "s.seletskiy@office.ngs.ru"
-description = "Среда для тестирования деплоера"
+owner = "[REQUIRED]"
+email = "[REQUIRED]"
+description = "[REQUIRED]"
  
 [resources.mysql_single]
 provider = "dbfarm"

@@ -39,5 +39,13 @@ func main() {
 		}
 	}
 
+	errs := configuration.CheckRequired(config, nil)
+	if errs != nil {
+		for _, err := range errs {
+			log.Println(err)
+		}
+		log.Fatal("Missing required arguments")
+	}
+
 	configuration.PrintConfig(config)
 }
