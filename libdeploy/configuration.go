@@ -81,52 +81,22 @@ func PutVariable(path string, config Config) (err error) {
 		}
 	}
 
-	if changer[last_path] != nil {
-		switch t := changer[last_path].(type) {
-		case time.Time:
-			t, err := time.Parse(timeFormat, val)
-			if err != nil {
-				return err
-			}
-
-			changer[last_path] = t
-		case int:
-			i, err := strconv.Atoi(val)
-			if err != nil {
-				return err
-			}
-
-			changer[last_path] = i
-		case bool:
-			b, err := strconv.ParseBool(val)
-			if err != nil {
-				return err
-			}
-			changer[last_path] = b
-		case string:
-			changer[last_path] = val
-		default:
-			err = errors.New(fmt.Sprintf("To set %s, value should be %T!", path, t))
-			return
-		}
-	} else {
-		if t, err := time.Parse(timeFormat, val); err != nil {
-			if i, err := strconv.Atoi(val); err != nil {
-				if r, err := strconv.ParseFloat(val, 64); err != nil {
-					if b, err := strconv.ParseBool(val); err != nil {
-						changer[last_path] = val // Cannot conver to any type, sujesting string
-					} else { // Converted to bool
-						changer[last_path] = b
-					}
-				} else { // Converted to float
-					changer[last_path] = r
+	if t, err := time.Parse(timeFormat, val); err != nil {
+		if i, err := strconv.Atoi(val); err != nil {
+			if r, err := strconv.ParseFloat(val, 64); err != nil {
+				if b, err := strconv.ParseBool(val); err != nil {
+					changer[last_path] = val // Cannot conver to any type, sujesting string
+				} else { // Converted to bool
+					changer[last_path] = b
 				}
-			} else { // Converted to int
-				changer[last_path] = i
+			} else { // Converted to float
+				changer[last_path] = r
 			}
-		} else { // Converted to time
-			changer[last_path] = t
+		} else { // Converted to int
+			changer[last_path] = i
 		}
+	} else { // Converted to time
+		changer[last_path] = t
 	}
 
 	return
