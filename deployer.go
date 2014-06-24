@@ -34,9 +34,7 @@ func main() {
 	}
 
 	for _, rep := range k {
-		if err := configuration.PutVariable(rep, config); err != nil {
-			log.Fatal(fmt.Sprintf("Error during setting \"%s\":\t%+v", rep, err))
-		}
+		configuration.ReplaceConfigParameter(rep, config)	
 	}
 
 	errs := configuration.CheckRequired(config, nil)

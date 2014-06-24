@@ -44,18 +44,12 @@ func PrintConfig(config map[string]interface{}) (err error) {
 	return
 }
 
-func PutVariable(path string, config map[string]interface{}) (err error) {
-	var full_path = "config"
+func SetVariable(path string, value interface{}, config map[string]interface{}) {
 	var buffer, changer map[string]interface{}
 	var last_path string
 
-	buf := strings.Split(path, ":")
-	// FIXME add check that only one semicolon is used
-	path = buf[0]
-	val := strings.Join(buf[1:], ":")
 	variable_path := strings.Split(path, ".")
 	for num, p := range variable_path {
-		full_path = fmt.Sprintf("%s[%s]", full_path, p)
 		if buffer == nil {
 			if num+1 < len(variable_path) { // first element
 				if config[p] == nil { // if no middle element
@@ -79,25 +73,31 @@ func PutVariable(path string, config map[string]interface{}) (err error) {
 		}
 	}
 
+	changer[last_path] = value
+}
+
+func ReplaceConfigParameter(path string, config map[string]interface{}) {
+	buf := strings.SplitN(path, ":", 2)
+	path = buf[0]
+	val := buf[1]
+
 	if t, err := time.Parse(timeFormat, val); err != nil {
 		if i, err := strconv.Atoi(val); err != nil {
 			if r, err := strconv.ParseFloat(val, 64); err != nil {
 				if b, err := strconv.ParseBool(val); err != nil {
-					changer[last_path] = val // Cannot conver to any type, sujesting string
+					SetVariable(path, val, config) // Cannot conver to any type, sujesting string
 				} else { // Converted to bool
-					changer[last_path] = b
+					SetVariable(path, b, config)
 				}
 			} else { // Converted to float
-				changer[last_path] = r
+				SetVariable(path, r, config)
 			}
 		} else { // Converted to int
-			changer[last_path] = i
+			SetVariable(path, i, config)
 		}
 	} else { // Converted to time
-		changer[last_path] = t
+		SetVariable(path, t, config)
 	}
-
-	return
 }
 
 func CheckRequired(conf interface{}, fullPath []string) (errs []error) {
