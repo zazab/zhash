@@ -1,0 +1,29 @@
+domain = "t1"
+ 
+[meta]
+owner = "s.seletskiy@office.ngs.ru"
+description = "Среда для тестирования деплоера"
+ 
+[resources.mysql_single]
+provider = "dbfarm"
+pool = "mysql"
+ 
+[resources.mongo_single]
+provider = "dbfarm"
+pool = "mongo"
+ 
+[resources.node_single]
+provider = "container"
+pool = "func"
+ 
+[resources.dns]
+depends = ["node_single"]
+provider = "pdns"
+template = "single"
+ 
+[resources.conf]
+depends = ["mysql_single", "mongo_single", "node_single"]
+provider = "chef"
+ 
+[configuration]
+runner = "chef-bootstrap"
