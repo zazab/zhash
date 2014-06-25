@@ -1,47 +1,33 @@
 package libdeploy
 
-type node struct {
-	value interface{}
-	next  *node
-}
+import (
+	"strconv"
+	"strings"
+	"time"
+)
 
-func NewStack() *Stack {
-	return &Stack{}
-}
+const TIME_FORMAT = "2006-01-02T15:04:05Z"
 
-type Stack struct {
-	head  *node
-	count int
-}
+func ParseSetArgument(path string) (string, interface{}) {
+	buf := strings.SplitN(path, ":", 2)
+	path = buf[0]
+	val := buf[1]
 
-func (s *Stack) Push(val interface{}) {
-	n := &node{value: val}
-
-	if s.head == nil {
-		s.head = n
-	} else {
-		n.next = s.head
-		s.head = n
+	if t, err := time.Parse(TIME_FORMAT, val); err == nil {
+		return path, t // Converted to time.Time
 	}
 
-	s.count++
-}
-
-func (s *Stack) Pop() interface{} {
-	var n *node
-	if s.head != nil {
-		n = s.head
-		s.head = n.next
-		s.count--
+	if i, err := strconv.Atoi(val); err == nil {
+		return path, i // Converted to int
 	}
 
-	if n == nil {
-		return nil
+	if r, err := strconv.ParseFloat(val, 64); err == nil {
+		return path, r // Converted to float64
 	}
 
-	return n.value
-}
+	if b, err := strconv.ParseBool(val); err == nil {
+		return path, b // Converted to bool
+	}
 
-func (s *Stack) Len() int {
-	return s.count
+	return path, val // Cannot conver to any type, sujesting string
 }

@@ -41,13 +41,13 @@ func main() {
 	}
 
 	for _, rep := range k {
-		config.ReplaceConfigParameter(rep)
+		config.SetVariable(libdeploy.ParseSetArgument(rep))
 	}
 
 	errs := config.Validate()
 	if errs != nil {
 		for _, err := range errs {
-			log.Printf("%s is required, please specify it by adding key -k %s:<value>", err.Path, err.Path)
+			log.Println(err.Error())
 		}
 		log.Fatal("Missing required arguments")
 	}

@@ -2,12 +2,11 @@ package libdeploy
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/BurntSushi/toml"
 	"io"
 	"io/ioutil"
-	"strconv"
 	"strings"
-	"time"
 )
 
 type Config map[string]interface{}
@@ -16,7 +15,9 @@ type ErrorRequired struct {
 	Path string
 }
 
-var timeFormat = "2006-01-02T15:04:05Z"
+func (e *ErrorRequired) Error() string {
+	return fmt.Sprintf("%s is required, please specify it by adding key -k %s:<value>", e.Path, e.Path)
+}
 
 func (c *Config) ReadConfig(r io.Reader) (err error) {
 	var buffer []byte
@@ -41,10 +42,8 @@ func (c Config) WriteConfig(w io.Writer) (err error) {
 }
 
 func (c Config) SetVariable(path string, value interface{}) {
-	var ptr map[string]interface{}
-	var key string = ""
-
-	ptr = c
+	key := ""
+	ptr := map[string]interface{}(c)
 	path_way := strings.Split(path, ".")
 	for i, p := range path_way {
 		if i < len(path_way)-1 { // middle element
@@ -60,30 +59,6 @@ func (c Config) SetVariable(path string, value interface{}) {
 	}
 
 	ptr[key] = value
-}
-
-func (c Config) ReplaceConfigParameter(path string) {
-	buf := strings.SplitN(path, ":", 2)
-	path = buf[0]
-	val := buf[1]
-
-	if t, err := time.Parse(timeFormat, val); err != nil {
-		if i, err := strconv.Atoi(val); err != nil {
-			if r, err := strconv.ParseFloat(val, 64); err != nil {
-				if b, err := strconv.ParseBool(val); err != nil {
-					c.SetVariable(path, val) // Cannot conver to any type, sujesting string
-				} else { // Converted to bool
-					c.SetVariable(path, b)
-				}
-			} else { // Converted to float
-				c.SetVariable(path, r)
-			}
-		} else { // Converted to int
-			c.SetVariable(path, i)
-		}
-	} else { // Converted to time
-		c.SetVariable(path, t)
-	}
 }
 
 func (c Config) GetPath(path ...string) interface{} {
@@ -139,29 +114,30 @@ func (c Config) GetFloat(path ...string) float64 {
 	return m.(float64)
 }
 
-type valNode struct {
-	path  string
-	value interface{}
-}
-
 func (c Config) Validate() (errs []ErrorRequired) {
-	s := NewStack()
+	nodes := []interface{}{}
+	paths := []string{}
 
-	for f, v := range c {
-		s.Push(valNode{f, v})
+	for p, v := range c {
+		nodes = append(nodes, v)
+		paths = append(paths, p)
 	}
 
-	for s.Len() > 0 {
-		n := s.Pop().(valNode)
-		switch n.value.(type) {
+	for len(nodes) > 0 {
+		node := nodes[len(nodes)-1]
+		path := paths[len(paths)-1]
+		nodes = nodes[:len(nodes)-1]
+		paths = paths[:len(paths)-1]
+
+		switch inner := node.(type) {
 		case map[string]interface{}:
-			for f, v := range n.value.(map[string]interface{}) {
-				p := n.path + "." + f
-				s.Push(valNode{p, v})
+			for k, n := range inner {
+				nodes = append(nodes, n)
+				paths = append(paths, path+"."+k)
 			}
-		default:
-			if n.value == "[REQUIRED]" {
-				errs = append(errs, ErrorRequired{n.path})
+		case string:
+			if inner == "[REQUIRED]" {
+				errs = append(errs, ErrorRequired{path})
 			}
 		}
 	}
