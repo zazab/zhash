@@ -1,12 +1,10 @@
-package configuration
+package libdeploy
 
 import (
 	"bytes"
-	"deployer/libdeploy"
 	"github.com/BurntSushi/toml"
 	"io"
 	"io/ioutil"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -88,15 +86,35 @@ func (c Config) ReplaceConfigParameter(path string) {
 	}
 }
 
+func (c Config) GetPath(path ...string) interface{} {
+	ptr := c
+	for i, p := range path {
+		switch ptr[p].(type) {
+		case map[string]interface{}:
+			if i == len(path)-1 {
+				return ptr[p]
+			}
+			ptr = ptr[p].(map[string]interface{})
+		default:
+			if i < len(path)-1 {
+				return nil
+			} else {
+				return ptr[p]
+			}
+		}
+	}
+
+	return nil
+}
+
 type valNode struct {
 	path  string
 	value interface{}
 }
 
 func (c Config) Validate() (errs []ErrorRequired) {
-	s := libdeploy.NewStack()
+	s := NewStack()
 
-	log.Println(c)
 	for f, v := range c {
 		s.Push(valNode{f, v})
 	}
