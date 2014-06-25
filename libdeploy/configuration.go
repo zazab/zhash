@@ -107,6 +107,38 @@ func (c Config) GetPath(path ...string) interface{} {
 	return nil
 }
 
+func (c Config) GetMap(path ...string) map[string]interface{} {
+	m := c.GetPath(path...)
+	if m == nil {
+		return nil
+	}
+	return m.(map[string]interface{})
+}
+
+func (c Config) GetString(path ...string) string {
+	m := c.GetPath(path...)
+	if m == nil {
+		return ""
+	}
+	return m.(string)
+}
+
+func (c Config) GetInt(path ...string) int {
+	m := c.GetPath(path...)
+	if m == nil {
+		return 0
+	}
+	return m.(int)
+}
+
+func (c Config) GetFloat(path ...string) float64 {
+	m := c.GetPath(path...)
+	if m == nil {
+		return 0
+	}
+	return m.(float64)
+}
+
 type valNode struct {
 	path  string
 	value interface{}
