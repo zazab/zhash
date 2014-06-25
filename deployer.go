@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -27,14 +28,19 @@ func main() {
 	flag.Parse()
 	var fn = flag.Args()
 
-	config, err := configuration.ReadConfig(fn[0])
+	fd, err := os.Open(fn[0])
+	if err != nil {
+		log.Fatal("Profile not found")
+	}
+	defer fd.Close()
+	config, err := configuration.ReadConfig(fd)
 	if err != nil {
 		log.Fatal("Cannot read config: ", err)
 		return
 	}
 
 	for _, rep := range k {
-		configuration.ReplaceConfigParameter(rep, config)	
+		configuration.ReplaceConfigParameter(rep, config)
 	}
 
 	errs := configuration.CheckRequired(config, nil)
@@ -45,5 +51,5 @@ func main() {
 		log.Fatal("Missing required arguments")
 	}
 
-	configuration.PrintConfig(config)
+	configuration.WriteConfig(os.Stdout, config)
 }

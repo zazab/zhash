@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/BurntSushi/toml"
-	"io/ioutil"
+	"io"
 	"strconv"
 	"strings"
 	"time"
@@ -13,34 +13,25 @@ import (
 
 var timeFormat = "2006-01-02T15:04:05Z"
 
-func ReadConfig(fileName string) (config map[string]interface{}, err error) {
-	blob, err := ioutil.ReadFile(fileName)
+func ReadConfig(r io.Reader) (config map[string]interface{}, err error) {
+	var buffer []byte
+	_, err = r.Read(buffer)
 	if err != nil {
 		return
 	}
 
-	_, err = toml.Decode(string(blob), &config)
+	_, err = toml.Decode(string(buffer), &config)
 
 	return
 }
 
-func SPrintConfig(config map[string]interface{}) (conf string, err error) {
+func WriteConfig(w io.Writer, config map[string]interface{}) (err error) {
 	buf := new(bytes.Buffer)
 	if err = toml.NewEncoder(buf).Encode(config); err != nil {
 		return
 	}
 
-	conf = buf.String()
-	return
-}
-
-func PrintConfig(config map[string]interface{}) (err error) {
-	buf := new(bytes.Buffer)
-	if err = toml.NewEncoder(buf).Encode(config); err != nil {
-		return
-	}
-
-	fmt.Println(buf.String())
+	w.Write(buf.Bytes())
 	return
 }
 
