@@ -94,30 +94,24 @@ type valNode struct {
 }
 
 func (c Config) Validate() (errs []ErrorRequired) {
-	log.Println("Start validating")
 	s := libdeploy.NewStack()
 
 	log.Println(c)
 	for f, v := range c {
-		log.Printf("Adding noded %s to stack", f)
 		s.Push(valNode{f, v})
 	}
 
 	for s.Len() > 0 {
 		n := s.Pop().(valNode)
-		log.Printf("Poped node %s from stack", n.path)
 		switch n.value.(type) {
 		case map[string]interface{}:
 			for f, v := range n.value.(map[string]interface{}) {
 				p := n.path + "." + f
-				log.Printf("Adding node %s to stack", p)
 				s.Push(valNode{p, v})
 			}
 		default:
 			if n.value == "[REQUIRED]" {
 				errs = append(errs, ErrorRequired{n.path})
-			} else {
-				log.Printf("Node %s is ok", n.path)
 			}
 		}
 	}
