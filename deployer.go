@@ -1,7 +1,7 @@
 package main
 
 import (
-	"deployer/libdeploy"
+	"deployer/libdeploy/configuration"
 	"flag"
 	"fmt"
 	"log"
@@ -47,7 +47,7 @@ func main() {
 	errs := config.Validate()
 	if errs != nil {
 		for _, err := range errs {
-			log.Println(err)
+			log.Printf("%s is required, please specify it by adding key -k %s:<value>", err.Path, err.Path)
 		}
 		log.Fatal("Missing required arguments")
 	}

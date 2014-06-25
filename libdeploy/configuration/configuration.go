@@ -2,7 +2,7 @@ package configuration
 
 import (
 	"bytes"
-	"errors"
+	"deployer/libdeploy"
 	"github.com/BurntSushi/toml"
 	"io"
 	"io/ioutil"
@@ -13,6 +13,10 @@ import (
 )
 
 type Config map[string]interface{}
+
+type ErrorRequired struct {
+	Path string
+}
 
 var timeFormat = "2006-01-02T15:04:05Z"
 
@@ -39,35 +43,25 @@ func (c Config) WriteConfig(w io.Writer) (err error) {
 }
 
 func (c Config) SetVariable(path string, value interface{}) {
-	var buffer, changer map[string]interface{}
-	var last_path string
+	var ptr map[string]interface{}
+	var key string = ""
 
-	variable_path := strings.Split(path, ".")
-	for num, p := range variable_path {
-		if buffer == nil {
-			if num+1 < len(variable_path) { // first element
-				if config[p] == nil { // if no middle element
-					config[p] = map[string]interface{}{}
-				}
-				buffer = config[p].(map[string]interface{})
-			} else { // first and last
-				changer = config
-				last_path = p
-			}
-		} else {
-			if num+1 < len(variable_path) { // middle element
-				if buffer[p] == nil { // if no middle element
-					buffer[p] = map[string]interface{}{}
-				}
-				buffer = buffer[p].(map[string]interface{})
-			} else { // last element
-				changer = buffer
-				last_path = p
+	ptr = c
+	path_way := strings.Split(path, ".")
+	for i, p := range path_way {
+		if i < len(path_way)-1 { // middle element
+			switch ptr[p].(type) {
+			case map[string]interface{}:
+				ptr = ptr[p].(map[string]interface{})
+			default:
+				ptr[p] = map[string]interface{}{}
+				ptr = ptr[p].(map[string]interface{})
 			}
 		}
+		key = p
 	}
 
-	changer[last_path] = value
+	ptr[key] = value
 }
 
 func (c Config) ReplaceConfigParameter(path string) {
@@ -94,17 +88,39 @@ func (c Config) ReplaceConfigParameter(path string) {
 	}
 }
 
-func CheckRequired(conf interface{}, fullPath []string) (errs []error) {
-	switch conf.(type) {
-	case map[string]interface{}:
-		for p, val := range conf.(map[string]interface{}) {
-			errs = append(errs, CheckRequired(val, append(fullPath, p))...)
-		}
-	default: // leaf
-		if conf == "[REQUIRED]" {
-			path := strings.Join(fullPath, ".")
-			errs = append(errs, errors.New(fmt.Sprintf("%s is reqired! Please set it by adding key -k %s:<value>", path, path)))
+type valNode struct {
+	path  string
+	value interface{}
+}
+
+func (c Config) Validate() (errs []ErrorRequired) {
+	log.Println("Start validating")
+	s := libdeploy.NewStack()
+
+	log.Println(c)
+	for f, v := range c {
+		log.Printf("Adding noded %s to stack", f)
+		s.Push(valNode{f, v})
+	}
+
+	for s.Len() > 0 {
+		n := s.Pop().(valNode)
+		log.Printf("Poped node %s from stack", n.path)
+		switch n.value.(type) {
+		case map[string]interface{}:
+			for f, v := range n.value.(map[string]interface{}) {
+				p := n.path + "." + f
+				log.Printf("Adding node %s to stack", p)
+				s.Push(valNode{p, v})
+			}
+		default:
+			if n.value == "[REQUIRED]" {
+				errs = append(errs, ErrorRequired{n.path})
+			} else {
+				log.Printf("Node %s is ok", n.path)
+			}
 		}
 	}
+
 	return
 }
