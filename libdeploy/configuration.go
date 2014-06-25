@@ -3,31 +3,34 @@ package configuration
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"github.com/BurntSushi/toml"
 	"io"
+	"io/ioutil"
+	"log"
 	"strconv"
 	"strings"
 	"time"
 )
 
+type Config map[string]interface{}
+
 var timeFormat = "2006-01-02T15:04:05Z"
 
-func ReadConfig(r io.Reader) (config map[string]interface{}, err error) {
+func (c *Config) ReadConfig(r io.Reader) (err error) {
 	var buffer []byte
-	_, err = r.Read(buffer)
+	buffer, err = ioutil.ReadAll(r)
 	if err != nil {
 		return
 	}
 
-	_, err = toml.Decode(string(buffer), &config)
+	_, err = toml.Decode(string(buffer), &c)
 
 	return
 }
 
-func WriteConfig(w io.Writer, config map[string]interface{}) (err error) {
+func (c Config) WriteConfig(w io.Writer) (err error) {
 	buf := new(bytes.Buffer)
-	if err = toml.NewEncoder(buf).Encode(config); err != nil {
+	if err = toml.NewEncoder(buf).Encode(c); err != nil {
 		return
 	}
 
@@ -35,7 +38,7 @@ func WriteConfig(w io.Writer, config map[string]interface{}) (err error) {
 	return
 }
 
-func SetVariable(path string, value interface{}, config map[string]interface{}) {
+func (c Config) SetVariable(path string, value interface{}) {
 	var buffer, changer map[string]interface{}
 	var last_path string
 
@@ -67,7 +70,7 @@ func SetVariable(path string, value interface{}, config map[string]interface{}) 
 	changer[last_path] = value
 }
 
-func ReplaceConfigParameter(path string, config map[string]interface{}) {
+func (c Config) ReplaceConfigParameter(path string) {
 	buf := strings.SplitN(path, ":", 2)
 	path = buf[0]
 	val := buf[1]
@@ -76,18 +79,18 @@ func ReplaceConfigParameter(path string, config map[string]interface{}) {
 		if i, err := strconv.Atoi(val); err != nil {
 			if r, err := strconv.ParseFloat(val, 64); err != nil {
 				if b, err := strconv.ParseBool(val); err != nil {
-					SetVariable(path, val, config) // Cannot conver to any type, sujesting string
+					c.SetVariable(path, val) // Cannot conver to any type, sujesting string
 				} else { // Converted to bool
-					SetVariable(path, b, config)
+					c.SetVariable(path, b)
 				}
 			} else { // Converted to float
-				SetVariable(path, r, config)
+				c.SetVariable(path, r)
 			}
 		} else { // Converted to int
-			SetVariable(path, i, config)
+			c.SetVariable(path, i)
 		}
 	} else { // Converted to time
-		SetVariable(path, t, config)
+		c.SetVariable(path, t)
 	}
 }
 

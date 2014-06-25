@@ -27,23 +27,24 @@ func main() {
 	flag.Var(&k, "k", "Fields to replace")
 	flag.Parse()
 	var fn = flag.Args()
+	var config configuration.Config
 
 	fd, err := os.Open(fn[0])
 	if err != nil {
 		log.Fatal("Profile not found")
 	}
 	defer fd.Close()
-	config, err := configuration.ReadConfig(fd)
+	err = config.ReadConfig(fd)
 	if err != nil {
 		log.Fatal("Cannot read config: ", err)
 		return
 	}
 
 	for _, rep := range k {
-		configuration.ReplaceConfigParameter(rep, config)
+		config.ReplaceConfigParameter(rep)
 	}
 
-	errs := configuration.CheckRequired(config, nil)
+	errs := config.Validate()
 	if errs != nil {
 		for _, err := range errs {
 			log.Println(err)
@@ -51,5 +52,5 @@ func main() {
 		log.Fatal("Missing required arguments")
 	}
 
-	configuration.WriteConfig(os.Stdout, config)
+	config.WriteConfig(os.Stdout)
 }
