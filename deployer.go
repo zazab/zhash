@@ -1,7 +1,7 @@
 package main
 
 import (
-	"deployer/libdeploy/configuration"
+	"deployer/libdeploy"
 	"flag"
 	"fmt"
 	"log"
@@ -27,7 +27,7 @@ func main() {
 	flag.Var(&k, "k", "Fields to replace")
 	flag.Parse()
 	var fn = flag.Args()
-	var config configuration.Config
+	var config libdeploy.Config
 
 	fd, err := os.Open(fn[0])
 	if err != nil {
