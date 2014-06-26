@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"io"
-	"io/ioutil"
 	"strings"
 )
 
@@ -15,30 +14,24 @@ type ErrorRequired struct {
 	Path string
 }
 
-func (e *ErrorRequired) Error() string {
+func (e ErrorRequired) Error() string {
 	return fmt.Sprintf("%s is required, please specify it by adding key -k %s:<value>", e.Path, e.Path)
 }
 
 func (c *Config) ReadConfig(r io.Reader) (err error) {
-	var buffer []byte
-	buffer, err = ioutil.ReadAll(r)
-	if err != nil {
-		return
-	}
-
-	_, err = toml.Decode(string(buffer), &c)
-
+	_, err = toml.DecodeReader(r, &c)
 	return
 }
 
 func (c Config) WriteConfig(w io.Writer) (err error) {
-	buf := new(bytes.Buffer)
-	if err = toml.NewEncoder(buf).Encode(c); err != nil {
-		return
-	}
-
-	w.Write(buf.Bytes())
+	err = toml.NewEncoder(w).Encode(c)
 	return
+}
+
+func (c Config) Reader() io.Reader {
+	var buff bytes.Buffer
+	c.WriteConfig(&buff)
+	return &buff
 }
 
 func (c Config) SetVariable(path string, value interface{}) {
@@ -122,7 +115,7 @@ func (c Config) GetFloat(path ...string) float64 {
 	return m.(float64)
 }
 
-func (c Config) Validate() (errs []ErrorRequired) {
+func (c Config) Validate() (errs []error) {
 	nodes := []interface{}{}
 	paths := []string{}
 
