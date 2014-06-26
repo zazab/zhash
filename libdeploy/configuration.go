@@ -98,6 +98,14 @@ func (c Config) GetString(path ...string) string {
 	return m.(string)
 }
 
+func (c Config) GetSlice(path ...string) []interface{} {
+	m := c.GetPath(path...)
+	if m == nil {
+		return []interface{}{}
+	}
+	return m.([]interface{})
+}
+
 func (c Config) GetInt(path ...string) int {
 	m := c.GetPath(path...)
 	if m == nil {
