@@ -1,0 +1,6 @@
+/deployer
+/deployer-dbfarm
+/deployer-container
+/deployer-pdns
+/deployer-chef
+/*.toml
