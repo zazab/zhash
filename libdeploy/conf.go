@@ -34,12 +34,15 @@ func (c Config) Reader() io.Reader {
 	return &buff
 }
 
-func (c Config) SetVariable(path string, value interface{}) {
+func (c Config) SetPath(value interface{}, path string) {
+	c.Set(value, strings.Split(path, ".")...)
+}
+
+func (c Config) Set(value interface{}, path ...string {
 	key := ""
 	ptr := map[string]interface{}(c)
-	path_way := strings.Split(path, ".")
-	for i, p := range path_way {
-		if i < len(path_way)-1 { // middle element
+	for i, p := range path {
+		if i < len(path)-1 { // middle element
 			switch node := ptr[p].(type) {
 			case map[string]interface{}:
 				ptr = node

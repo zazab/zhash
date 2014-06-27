@@ -39,7 +39,7 @@ func main() {
 	}
 
 	for _, rep := range k {
-		config.SetVariable(libdeploy.ParseSetArgument(rep))
+		config.SetPath(libdeploy.ParseSetArgument(rep))
 	}
 
 	errs := config.Validate()
