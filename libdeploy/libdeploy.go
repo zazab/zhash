@@ -29,5 +29,5 @@ func ParseSetArgument(path string) (string, interface{}) {
 		return path, b // Converted to bool
 	}
 
-	return path, val // Cannot conver to any type, sujesting string
+	return path, val // Cannot conver to any type, suggesting string
 }

@@ -9,13 +9,13 @@ import (
 	"strings"
 )
 
-type replacers []string
+type replacments []string
 
-func (i *replacers) String() string {
+func (i *replacments) String() string {
 	return fmt.Sprint(*i)
 }
 
-func (i *replacers) Set(value string) error {
+func (i *replacments) Set(value string) error {
 	for _, val := range strings.Split(value, ",") {
 		*i = append(*i, val)
 	}
@@ -23,21 +23,19 @@ func (i *replacers) Set(value string) error {
 }
 
 func main() {
-	var k replacers
-	flag.Var(&k, "k", "Fields to replace")
+	var k replacments
+	flag.Var(&k, "k", "fields to replace")
 	flag.Parse()
-	var fn = flag.Args()
 	var config libdeploy.Config
 
-	fd, err := os.Open(fn[0])
+	fd, err := os.Open(flag.Arg(0))
 	if err != nil {
 		log.Fatal("Profile not found")
 	}
 	defer fd.Close()
 	err = config.ReadConfig(fd)
 	if err != nil {
-		log.Fatal("Cannot read config: ", err)
-		return
+		log.Fatal("Cannot read config:", err)
 	}
 
 	for _, rep := range k {

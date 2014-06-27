@@ -10,11 +10,11 @@ import (
 
 type Config map[string]interface{}
 
-type ErrorRequired struct {
+type RequiredError struct {
 	Path string
 }
 
-func (e ErrorRequired) Error() string {
+func (e RequiredError) Error() string {
 	return fmt.Sprintf("%s is required, please specify it by adding key -k %s:<value>", e.Path, e.Path)
 }
 
@@ -40,9 +40,9 @@ func (c Config) SetVariable(path string, value interface{}) {
 	path_way := strings.Split(path, ".")
 	for i, p := range path_way {
 		if i < len(path_way)-1 { // middle element
-			switch ptr[p].(type) {
+			switch node := ptr[p].(type) {
 			case map[string]interface{}:
-				ptr = ptr[p].(map[string]interface{})
+				ptr = node
 			default:
 				ptr[p] = map[string]interface{}{}
 				ptr = ptr[p].(map[string]interface{})
@@ -57,22 +57,19 @@ func (c Config) SetVariable(path string, value interface{}) {
 func (c Config) GetPath(path ...string) interface{} {
 	ptr := c
 	for i, p := range path {
-		switch ptr[p].(type) {
+		if i == len(path)-1 {
+			return ptr[p]
+		}
+
+		switch node := ptr[p].(type) {
 		case map[string]interface{}:
-			if i == len(path)-1 {
-				return ptr[p]
-			}
-			ptr = ptr[p].(map[string]interface{})
+			ptr = node
 		default:
-			if i < len(path)-1 {
-				return nil
-			} else {
-				return ptr[p]
-			}
+			return nil
 		}
 	}
 
-	return nil
+	return ptr
 }
 
 func (c Config) GetMap(path ...string) map[string]interface{} {
@@ -138,7 +135,7 @@ func (c Config) Validate() (errs []error) {
 			}
 		case string:
 			if inner == "[REQUIRED]" {
-				errs = append(errs, ErrorRequired{path})
+				errs = append(errs, RequiredError{path})
 			}
 		}
 	}
