@@ -4,3 +4,4 @@
 /deployer-pdns
 /deployer-chef
 /*.toml
+*.out
