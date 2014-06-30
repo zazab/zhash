@@ -2,6 +2,7 @@ package libdeploy
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"io"
@@ -38,7 +39,7 @@ func (c Config) SetPath(value interface{}, path string) {
 	c.Set(value, strings.Split(path, ".")...)
 }
 
-func (c Config) Set(value interface{}, path ...string {
+func (c Config) Set(value interface{}, path ...string) {
 	key := ""
 	ptr := map[string]interface{}(c)
 	for i, p := range path {
@@ -75,44 +76,71 @@ func (c Config) GetPath(path ...string) interface{} {
 	return ptr
 }
 
-func (c Config) GetMap(path ...string) map[string]interface{} {
+func (c Config) GetMap(path ...string) (map[string]interface{}, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return nil
+		return map[string]interface{}{}, nil
 	}
-	return m.(map[string]interface{})
+	switch val := m.(type) {
+	case map[string]interface{}:
+		return val, nil
+	default:
+		return map[string]interface{}{}, errors.New(fmt.Sprintf("Error converting %s to map", strings.Join(path, ".")))
+	}
 }
 
-func (c Config) GetString(path ...string) string {
+func (c Config) GetString(path ...string) (string, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return ""
+		return "", nil
 	}
-	return m.(string)
+	switch val := m.(type) {
+	case string:
+		return val, nil
+	default:
+		return "", errors.New(fmt.Sprintf("Error converting %s to string", strings.Join(path, ".")))
+	}
 }
 
-func (c Config) GetSlice(path ...string) []interface{} {
+func (c Config) GetSlice(path ...string) ([]interface{}, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return []interface{}{}
+		return []interface{}{}, nil
 	}
-	return m.([]interface{})
+	switch val := m.(type) {
+	case []interface{}:
+		return val, nil
+	default:
+		return []interface{}{}, errors.New(fmt.Sprintf("Error converting %s to slice", strings.Join(path, ".")))
+	}
 }
 
-func (c Config) GetInt(path ...string) int {
+func (c Config) GetInt(path ...string) (int, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return 0
+		return 0, nil
 	}
-	return m.(int)
+	switch val := m.(type) {
+	case int:
+		return val, nil
+	default:
+		return 0, errors.New(fmt.Sprintf("Error converting %s to int", strings.Join(path, ".")))
+	}
 }
 
-func (c Config) GetFloat(path ...string) float64 {
+func (c Config) GetFloat(path ...string) (float64, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return 0
+		return 0, nil
 	}
-	return m.(float64)
+	switch val := m.(type) {
+	case float64:
+		return val, nil
+	case int:
+		return float64(val), nil
+	default:
+		return 0, errors.New(fmt.Sprintf("Error converting %s to float", strings.Join(path, ".")))
+	}
 }
 
 func (c Config) Validate() (errs []error) {
