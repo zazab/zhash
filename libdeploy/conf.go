@@ -151,13 +151,15 @@ func (c Config) GetStringSlice(path ...string) ([]string, error) {
 	}
 }
 
-func (c Config) GetInt(path ...string) (int, error) {
+func (c Config) GetInt(path ...string) (int64, error) {
 	m := c.GetPath(path...)
 	if m == nil {
 		return 0, nil
 	}
 	switch val := m.(type) {
 	case int:
+		return int64(val), nil
+	case int64:
 		return val, nil
 	default:
 		return 0, errors.New(fmt.Sprintf("Error converting %s to int",
@@ -174,6 +176,8 @@ func (c Config) GetFloat(path ...string) (float64, error) {
 	case float64:
 		return val, nil
 	case int:
+		return float64(val), nil
+	case int64:
 		return float64(val), nil
 	default:
 		return 0, errors.New(fmt.Sprintf("Error converting %s to float",
