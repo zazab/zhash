@@ -9,24 +9,22 @@ import (
 	"strings"
 )
 
-type replacments []string
+type replacements []string
 
-func (i *replacments) String() string {
+func (i *replacements) String() string {
 	return fmt.Sprint(*i)
 }
 
-func (i *replacments) Set(value string) error {
-	for _, val := range strings.Split(value, ",") {
-		*i = append(*i, val)
-	}
+func (i *replacements) Set(value string) error {
+	*i = append(*i, strings.Split(value, ",")...)
 	return nil
 }
 
 func main() {
-	var k replacments
+	var k replacements
 	flag.Var(&k, "k", "fields to replace")
 	flag.Parse()
-	var config libdeploy.Config
+	config := libdeploy.NewConfig()
 
 	fd, err := os.Open(flag.Arg(0))
 	if err != nil {

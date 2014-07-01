@@ -11,22 +11,27 @@ import (
 
 type Config map[string]interface{}
 
+func NewConfig() Config {
+	return Config{}
+}
+
 type RequiredError struct {
 	Path string
 }
 
 func (e RequiredError) Error() string {
-	return fmt.Sprintf("%s is required, please specify it by adding key -k %s:<value>", e.Path, e.Path)
+	return fmt.Sprintf("%s is required, please specify it by adding "+
+		"key -k %s:<value>", e.Path, e.Path)
 }
 
-func (c *Config) ReadConfig(r io.Reader) (err error) {
-	_, err = toml.DecodeReader(r, &c)
-	return
+func (c *Config) ReadConfig(r io.Reader) error {
+	_, err := toml.DecodeReader(r, &c)
+	return err
 }
 
-func (c Config) WriteConfig(w io.Writer) (err error) {
-	err = toml.NewEncoder(w).Encode(c)
-	return
+func (c Config) WriteConfig(w io.Writer) error {
+	err := toml.NewEncoder(w).Encode(c)
+	return err
 }
 
 func (c Config) Reader() io.Reader {
@@ -85,7 +90,9 @@ func (c Config) GetMap(path ...string) (map[string]interface{}, error) {
 	case map[string]interface{}:
 		return val, nil
 	default:
-		return map[string]interface{}{}, errors.New(fmt.Sprintf("Error converting %s to map", strings.Join(path, ".")))
+		return map[string]interface{}{},
+			errors.New(fmt.Sprintf("Error converting %s to map",
+				strings.Join(path, ".")))
 	}
 }
 
@@ -98,7 +105,8 @@ func (c Config) GetString(path ...string) (string, error) {
 	case string:
 		return val, nil
 	default:
-		return "", errors.New(fmt.Sprintf("Error converting %s to string", strings.Join(path, ".")))
+		return "", errors.New(fmt.Sprintf("Error converting %s to string",
+			strings.Join(path, ".")))
 	}
 }
 
@@ -111,7 +119,9 @@ func (c Config) GetSlice(path ...string) ([]interface{}, error) {
 	case []interface{}:
 		return val, nil
 	default:
-		return []interface{}{}, errors.New(fmt.Sprintf("Error converting %s to slice", strings.Join(path, ".")))
+		return []interface{}{},
+			errors.New(fmt.Sprintf("Error converting %s to slice",
+				strings.Join(path, ".")))
 	}
 }
 
@@ -128,12 +138,16 @@ func (c Config) GetStringSlice(path ...string) ([]string, error) {
 			case string:
 				sl = append(sl, s)
 			default:
-				return []string{}, errors.New(fmt.Sprintf("Error converting %s to string slice", strings.Join(path, ".")))
+				return []string{}, errors.New(
+					fmt.Sprintf("Error converting %s to string slice",
+						strings.Join(path, ".")))
 			}
 		}
 		return sl, nil
 	default:
-		return []string{}, errors.New(fmt.Sprintf("Error converting %s to slice", strings.Join(path, ".")))
+		return []string{},
+			errors.New(fmt.Sprintf("Error converting %s to slice",
+				strings.Join(path, ".")))
 	}
 }
 
@@ -146,7 +160,8 @@ func (c Config) GetInt(path ...string) (int, error) {
 	case int:
 		return val, nil
 	default:
-		return 0, errors.New(fmt.Sprintf("Error converting %s to int", strings.Join(path, ".")))
+		return 0, errors.New(fmt.Sprintf("Error converting %s to int",
+			strings.Join(path, ".")))
 	}
 }
 
@@ -161,7 +176,8 @@ func (c Config) GetFloat(path ...string) (float64, error) {
 	case int:
 		return float64(val), nil
 	default:
-		return 0, errors.New(fmt.Sprintf("Error converting %s to float", strings.Join(path, ".")))
+		return 0, errors.New(fmt.Sprintf("Error converting %s to float",
+			strings.Join(path, ".")))
 	}
 }
 
