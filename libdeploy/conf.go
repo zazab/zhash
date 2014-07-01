@@ -115,6 +115,28 @@ func (c Config) GetSlice(path ...string) ([]interface{}, error) {
 	}
 }
 
+func (c Config) GetStringSlice(path ...string) ([]string, error) {
+	m := c.GetPath(path...)
+	if m == nil {
+		return []string{}, nil
+	}
+	switch val := m.(type) {
+	case []interface{}:
+		sl := []string{}
+		for _, v := range val {
+			switch s := v.(type) {
+			case string:
+				sl = append(sl, s)
+			default:
+				return []string{}, errors.New(fmt.Sprintf("Error converting %s to string slice", strings.Join(path, ".")))
+			}
+		}
+		return sl, nil
+	default:
+		return []string{}, errors.New(fmt.Sprintf("Error converting %s to slice", strings.Join(path, ".")))
+	}
+}
+
 func (c Config) GetInt(path ...string) (int, error) {
 	m := c.GetPath(path...)
 	if m == nil {
