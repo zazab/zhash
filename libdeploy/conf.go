@@ -52,6 +52,8 @@ func (c Config) Set(value interface{}, path ...string) {
 			switch node := ptr[p].(type) {
 			case map[string]interface{}:
 				ptr = node
+			case Config:
+				ptr = map[string]interface{}(node)
 			default:
 				ptr[p] = map[string]interface{}{}
 				ptr = ptr[p].(map[string]interface{})
