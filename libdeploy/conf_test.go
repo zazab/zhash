@@ -165,7 +165,7 @@ var mapGetTests []TestGet = []TestGet{
 		"email":       "some@test.ru",
 		"description": "Tests",
 	}, false},
-	{[]string{"meta", "foo", "bar"}, map[string]interface{}{}, false},
+	{[]string{"meta", "foo", "bar"}, map[string]interface{}{}, true},
 	{[]string{"domain"}, map[string]interface{}{}, true},
 }
 
@@ -194,7 +194,7 @@ func TestGetMap(t *testing.T) {
 
 var sliceGetTests []TestGet = []TestGet{
 	{[]string{"resources", "conf", "depends"}, []interface{}{"mysql_single", "mongo_single", "node_single"}, false},
-	{[]string{"meta", "foo", "bar"}, []interface{}{}, false},
+	{[]string{"meta", "foo", "bar"}, []interface{}{}, true},
 	{[]string{"domain"}, []interface{}{}, true},
 }
 
@@ -224,7 +224,7 @@ func TestGetSlice(t *testing.T) {
 var stringSliceGetTests []TestGet = []TestGet{
 	{[]string{"resources", "conf", "depends"}, []string{"mysql_single", "mongo_single", "node_single"}, false},
 	{[]string{"getters", "intSlice"}, []string{}, true},
-	{[]string{"meta", "foo", "bar"}, []string{}, false},
+	{[]string{"meta", "foo", "bar"}, []string{}, true},
 	{[]string{"domain"}, []string{}, true},
 }
 
@@ -253,7 +253,7 @@ func TestGetStringSlice(t *testing.T) {
 
 var intGetTests []TestGet = []TestGet{
 	{[]string{"getters", "int"}, int64(10), false},
-	{[]string{"meta", "foo", "bar"}, int64(0), false},
+	{[]string{"meta", "foo", "bar"}, int64(0), true},
 	{[]string{"domain"}, int64(0), true},
 }
 
@@ -284,7 +284,7 @@ func TestGetInt(t *testing.T) {
 var floatGetTests []TestGet = []TestGet{
 	{[]string{"getters", "float"}, 10.1, false},
 	{[]string{"getters", "int"}, 10.0, false},
-	{[]string{"meta", "foo", "bar"}, 0.0, false},
+	{[]string{"meta", "foo", "bar"}, 0.0, true},
 	{[]string{"domain"}, 0.0, true},
 }
 
@@ -309,7 +309,7 @@ func TestGetFloat(t *testing.T) {
 
 var stringGetTests []TestGet = []TestGet{
 	{[]string{"domain"}, "t6", false},
-	{[]string{"meta", "bar", "bazzar"}, "", false},
+	{[]string{"meta", "bar", "bazzar"}, "", true},
 	{[]string{"meta"}, "", true},
 }
 

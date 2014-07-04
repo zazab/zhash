@@ -44,6 +44,10 @@ func (c Config) SetPath(value interface{}, path string) {
 	c.Set(value, strings.Split(path, ".")...)
 }
 
+func newNotFoundError(path []string) error {
+	return errors.New(fmt.Sprintf("Value for %s not found", strings.Join(path, ".")))
+}
+
 func (c Config) Set(value interface{}, path ...string) {
 	key := ""
 	ptr := map[string]interface{}(c)
@@ -86,7 +90,7 @@ func (c Config) GetPath(path ...string) interface{} {
 func (c Config) GetMap(path ...string) (map[string]interface{}, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return map[string]interface{}{}, nil
+		return map[string]interface{}{}, newNotFoundError(path)
 	}
 	switch val := m.(type) {
 	case map[string]interface{}:
@@ -101,7 +105,7 @@ func (c Config) GetMap(path ...string) (map[string]interface{}, error) {
 func (c Config) GetString(path ...string) (string, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return "", nil
+		return "", newNotFoundError(path)
 	}
 	switch val := m.(type) {
 	case string:
@@ -115,7 +119,7 @@ func (c Config) GetString(path ...string) (string, error) {
 func (c Config) GetSlice(path ...string) ([]interface{}, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return []interface{}{}, nil
+		return []interface{}{}, newNotFoundError(path)
 	}
 	switch val := m.(type) {
 	case []interface{}:
@@ -130,7 +134,7 @@ func (c Config) GetSlice(path ...string) ([]interface{}, error) {
 func (c Config) GetStringSlice(path ...string) ([]string, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return []string{}, nil
+		return []string{}, newNotFoundError(path)
 	}
 	switch val := m.(type) {
 	case []interface{}:
@@ -156,7 +160,7 @@ func (c Config) GetStringSlice(path ...string) ([]string, error) {
 func (c Config) GetInt(path ...string) (int64, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return 0, nil
+		return 0, newNotFoundError(path)
 	}
 	switch val := m.(type) {
 	case int:
@@ -172,7 +176,7 @@ func (c Config) GetInt(path ...string) (int64, error) {
 func (c Config) GetFloat(path ...string) (float64, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return 0, nil
+		return 0, newNotFoundError(path)
 	}
 	switch val := m.(type) {
 	case float64:
