@@ -11,6 +11,8 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+const REQUIRED = "[REQUIRED]"
+
 type Config map[string]interface{}
 
 func NewConfig() Config {
@@ -44,8 +46,7 @@ func (c *Config) ReadConfig(r io.Reader) error {
 }
 
 func (c Config) WriteConfig(w io.Writer) error {
-	err := toml.NewEncoder(w).Encode(c)
-	return err
+	return toml.NewEncoder(w).Encode(c)
 }
 
 func (c Config) Reader() io.Reader {
@@ -237,7 +238,7 @@ func (c Config) Validate() (errs []error) {
 				paths = append(paths, path+"."+k)
 			}
 		case string:
-			if inner == "[REQUIRED]" {
+			if inner == REQUIRED {
 				errs = append(errs, RequiredError{path})
 			}
 		}
