@@ -1,6 +1,7 @@
 package libdeploy
 
 import (
+	"net"
 	"strconv"
 	"strings"
 	"time"
@@ -30,4 +31,18 @@ func ParseSetArgument(path string) (interface{}, string) {
 	}
 
 	return val, path // Cannot conver to any type, suggesting string
+}
+
+func ResolveDomainName(hostname string) ([]string, error) {
+	ips, err := net.LookupIP(hostname)
+	if err != nil {
+		return nil, err
+	}
+
+	result := []string{}
+	for _, ip := range ips {
+		result = append( result, ip.String())
+	}
+
+	return result, nil
 }
