@@ -2,6 +2,7 @@ package libdeploy
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/BurntSushi/toml"
@@ -229,4 +230,13 @@ func (c Config) Validate() (errs []error) {
 	}
 
 	return
+}
+
+func (c Config) String() string {
+	buf, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		return "Error converting config to json"
+	}
+
+	return string(buf)
 }
