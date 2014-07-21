@@ -1,9 +1,11 @@
 package libdeploy
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -30,34 +32,35 @@ func readConfig(path string) (Config, error) {
 	return conf, nil
 }
 
-var configs = map[string]struct {
-	path  string
-	valid bool
-}{
-	"valid":   {"test_valid.toml", true},
-	"invalid": {"test_invalid.toml", false},
+var configs = map[string]string{
+	"valid":   "test_valid.toml",
+	"invalid": "test_invalid.toml",
 }
 
-func TestValidate(t *testing.T) {
-	for c, test := range configs {
-		conf, err := readConfig(test.path)
-		if err != nil {
-			t.Errorf("%s: Error loading config: %v", c, err)
-		}
-		errs := conf.Validate()
+func TestValidateValid(t *testing.T) {
+	conf, err := readConfig(configs["valid"])
+	if err != nil {
+		t.Errorf("Error loading config: %v", err)
+	}
+	errs := conf.Validate()
 
-		if test.valid {
-			if len(errs) > 0 {
-				t.Errorf("%s: config doesn't validates, but it should; Errors: %v", c, errs)
-			}
-		} else {
-			if len(errs) == 0 {
-				t.Errorf("%s: config validates, but it should fail", c)
-			} else {
-				for _, err = range errs {
-					t.Log(err.Error())
-				}
-			}
+	if len(errs) > 0 {
+		t.Errorf("config doesn't validates, but it should; Errors: %v", errs)
+	}
+}
+
+func TestValidateInvalid(t *testing.T) {
+	conf, err := readConfig(configs["invalid"])
+	if err != nil {
+		t.Errorf(" Error loading config: %v", err)
+	}
+	errs := conf.Validate()
+
+	if len(errs) == 0 {
+		t.Errorf("config validates, but it should fail")
+	} else {
+		for _, err = range errs {
+			t.Log(err.Error())
 		}
 	}
 }
@@ -93,17 +96,24 @@ var setTests = []struct {
 }
 
 func TestSetPath(t *testing.T) {
-	conf, err := readConfig(configs["valid"].path)
+	conf, err := readConfig(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
 	for _, test := range setTests {
 		conf.SetPath(test.value, test.path)
 	}
+
+	for i, test := range setTests {
+		val := conf.GetPath(strings.Split(test.path, ".")...)
+		if !reflect.DeepEqual(val, test.value) {
+			t.Errorf("#%d: conf[%s]%#v != %#v", i, test.path, val, test.value)
+		}
+	}
 }
 
 func TestWriteConfig(t *testing.T) {
-	conf, err := readConfig(configs["valid"].path)
+	conf, err := readConfig(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -115,7 +125,7 @@ func TestWriteConfig(t *testing.T) {
 }
 
 func TestConfigReader(t *testing.T) {
-	conf, err := readConfig(configs["valid"].path)
+	conf, err := readConfig(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -135,18 +145,18 @@ func TestConfigReader(t *testing.T) {
 type TestGet struct {
 	path  []string
 	value interface{}
-	fails bool
-}
-
-var getTests []TestGet = []TestGet{
-	{[]string{"domain"}, "t6", false},
-	{[]string{"meta", "owner"}, "e.persienko", false},
-	{[]string{"resources", "mongo_single", "provider"}, "dbfarm", false},
-	{[]string{"meta", "foo", "bar"}, nil, false},
 }
 
 func TestGetPath(t *testing.T) {
-	conf, err := readConfig(configs["valid"].path)
+	var getTests []TestGet = []TestGet{
+		{[]string{"domain"}, "t6"},
+		{[]string{"meta", "owner"}, "e.persienko"},
+		{[]string{"resources", "mongo_single", "provider"}, "dbfarm"},
+		{[]string{"meta", "foo", "bar"}, nil},
+		{[]string{}, nil},
+	}
+
+	conf, err := readConfig(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -159,137 +169,196 @@ func TestGetPath(t *testing.T) {
 	}
 }
 
-var mapGetTests []TestGet = []TestGet{
-	{[]string{"meta"}, map[string]interface{}{
-		"owner":       "e.persienko",
-		"email":       "some@test.ru",
-		"description": "Tests",
-	}, false},
-	{[]string{"meta", "foo", "bar"}, map[string]interface{}{}, true},
-	{[]string{"domain"}, map[string]interface{}{}, true},
-}
+func TestGetMapSuccess(t *testing.T) {
+	var mapGetTests []TestGet = []TestGet{
+		{[]string{"meta"}, map[string]interface{}{
+			"owner":       "e.persienko",
+			"email":       "some@test.ru",
+			"description": "Tests",
+			"bool":        true,
+			"bool_f":      false,
+		}},
+	}
 
-func TestGetMap(t *testing.T) {
-	conf, err := readConfig(configs["valid"].path)
+	conf, err := readConfig(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
 
 	for i, test := range mapGetTests {
 		m, err := conf.GetMap(test.path...)
-		if !test.fails {
-			if err != nil {
-				t.Errorf("#%d: GetMap(%s) caused error: %v", i, test.path, err)
-			}
-		} else {
-			if err == nil {
-				t.Errorf("#%d: GetMap(%s) doesn't cause error, but it should", i, test.path)
-			}
+		if err != nil {
+			t.Errorf("#%d: GetMap(%s) caused error: %v", i, test.path, err)
 		}
 		if !reflect.DeepEqual(m, test.value) {
-			t.Errorf("#%d: GetMap(%s)=%#v, %v; want %#v, %v", i, test.path, m, err, test.value, test.fails)
+			t.Errorf("#%d: GetMap(%s)=%#v; want %#v", i, test.path, m, test.value)
 		}
 	}
 }
 
-var sliceGetTests []TestGet = []TestGet{
-	{[]string{"resources", "conf", "depends"}, []interface{}{"mysql_single", "mongo_single", "node_single"}, false},
-	{[]string{"meta", "foo", "bar"}, []interface{}{}, true},
-	{[]string{"domain"}, []interface{}{}, true},
+func TestGetMapFail(t *testing.T) {
+	var mapGetTests []TestGet = []TestGet{
+		{[]string{"meta", "foo", "bar"}, map[string]interface{}{}},
+		{[]string{"domain"}, map[string]interface{}{}},
+	}
+	conf, err := readConfig(configs["valid"])
+	if err != nil {
+		t.Errorf("Error loading config: %v", err)
+	}
+
+	for i, test := range mapGetTests {
+		m, err := conf.GetMap(test.path...)
+		if err == nil {
+			t.Errorf("#%d: GetMap(%s) doesn't cause error, but it should", i, test.path)
+		} else {
+			t.Logf("Err: %s", err)
+		}
+		if !reflect.DeepEqual(m, test.value) {
+			t.Errorf("#%d: GetMap(%s)=%#v; want %#v", i, test.path, m, test.value)
+		}
+	}
 }
 
-func TestGetSlice(t *testing.T) {
-	conf, err := readConfig(configs["valid"].path)
+func TestGetSliceSuccess(t *testing.T) {
+	var sliceGetTests []TestGet = []TestGet{
+		{[]string{"resources", "conf", "depends"}, []interface{}{"mysql_single", "mongo_single", "node_single"}},
+	}
+
+	conf, err := readConfig(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
 
 	for i, test := range sliceGetTests {
 		m, err := conf.GetSlice(test.path...)
-		if !test.fails {
-			if err != nil {
-				t.Errorf("#%d: GetSlice(%s) caused error: %v", i, test.path, err)
-			}
-		} else {
-			if err == nil {
-				t.Errorf("#%d: GetSlice(%s) doesn't cause error, but it should", i, test.path)
-			}
+		if err != nil {
+			t.Errorf("#%d: GetSlice(%s) caused error: %v", i, test.path, err)
 		}
 		if !reflect.DeepEqual(m, test.value) {
-			t.Errorf("#%d: GetSlice(%s)=%#v, %v; want %#v, %v", i, test.path, m, err, test.value, test.fails)
+			t.Errorf("#%d: GetSlice(%s)=%#v; want %#v", i, test.path, m, test.value)
 		}
 	}
 }
 
-var stringSliceGetTests []TestGet = []TestGet{
-	{[]string{"resources", "conf", "depends"}, []string{"mysql_single", "mongo_single", "node_single"}, false},
-	{[]string{"getters", "intSlice"}, []string{}, true},
-	{[]string{"meta", "foo", "bar"}, []string{}, true},
-	{[]string{"domain"}, []string{}, true},
+func TestGetSliceFail(t *testing.T) {
+	var sliceGetTests []TestGet = []TestGet{
+		{[]string{"meta", "foo", "bar"}, []interface{}{}},
+		{[]string{"domain"}, []interface{}{}},
+	}
+
+	conf, err := readConfig(configs["valid"])
+	if err != nil {
+		t.Errorf("Error loading config: %v", err)
+	}
+
+	for i, test := range sliceGetTests {
+		m, err := conf.GetSlice(test.path...)
+		if err == nil {
+			t.Errorf("#%d: GetSlice(%s) doesn't cause error, but it should", i, test.path)
+		} else {
+			t.Logf("Err: %s", err)
+		}
+		if !reflect.DeepEqual(m, test.value) {
+			t.Errorf("#%d: GetSlice(%s)=%#v; want %#v", i, test.path, m, test.value)
+		}
+	}
 }
 
-func TestGetStringSlice(t *testing.T) {
-	conf, err := readConfig(configs["valid"].path)
+func TestGetStringSliceSuccess(t *testing.T) {
+	var stringSliceGetTests []TestGet = []TestGet{
+		{[]string{"resources", "conf", "depends"}, []string{"mysql_single", "mongo_single", "node_single"}},
+	}
+	conf, err := readConfig(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
 
 	for i, test := range stringSliceGetTests {
 		m, err := conf.GetStringSlice(test.path...)
-		if !test.fails {
-			if err != nil {
-				t.Errorf("#%d: GetStringSlice(%s) caused error: %v", i, test.path, err)
-			}
-		} else {
-			if err == nil {
-				t.Errorf("#%d: GetStringSlice(%s) doesn't cause error, but it should", i, test.path)
-			}
+		if err != nil {
+			t.Errorf("#%d: GetStringSlice(%s) caused error: %v", i, test.path, err)
 		}
 		if !reflect.DeepEqual(m, test.value) {
-			t.Errorf("#%d: GetStringSlice(%s)=%#v, %v; want %#v, %v", i, test.path, m, err, test.value, test.fails)
+			t.Errorf("#%d: GetStringSlice(%s)=%#v; want %#v", i, test.path, m, test.value)
 		}
 	}
 }
 
-var intGetTests []TestGet = []TestGet{
-	{[]string{"getters", "int"}, int64(10), false},
-	{[]string{"meta", "foo", "bar"}, int64(0), true},
-	{[]string{"domain"}, int64(0), true},
+func TestGetStringSliceFail(t *testing.T) {
+	var stringSliceGetTests []TestGet = []TestGet{
+		{[]string{"getters", "intSlice"}, []string{}},
+		{[]string{"meta", "foo", "bar"}, []string{}},
+		{[]string{"domain"}, []string{}},
+	}
+	conf, err := readConfig(configs["valid"])
+	if err != nil {
+		t.Errorf("Error loading config: %v", err)
+	}
+
+	for i, test := range stringSliceGetTests {
+		m, err := conf.GetStringSlice(test.path...)
+		if err == nil {
+			t.Errorf("#%d: GetStringSlice(%s) doesn't cause error, but it should", i, test.path)
+		} else {
+			t.Logf("Err: %s", err)
+		}
+		if !reflect.DeepEqual(m, test.value) {
+			t.Errorf("#%d: GetStringSlice(%s)=%#v; want %#v", i, test.path, m, test.value)
+		}
+	}
 }
 
-func TestGetInt(t *testing.T) {
-	conf, err := readConfig(configs["valid"].path)
+func TestGetIntSuccess(t *testing.T) {
+	var intGetTests []TestGet = []TestGet{
+		{[]string{"getters", "int"}, int64(10)},
+	}
+	conf, err := readConfig(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
 
 	for i, test := range intGetTests {
 		in, err := conf.GetInt(test.path...)
-		if !test.fails {
-			if err != nil {
-				v := conf.GetPath(test.path...)
-				t.Errorf("#%d: GetInt(%s) caused error: %v, %s.(type) = %T", i, test.path, err, test.path, v)
-			}
-		} else {
-			if err == nil {
-				t.Errorf("#%d: GetInt(%s) doesn't cause error, but it should", i, test.path)
-			}
+		if err != nil {
+			v := conf.GetPath(test.path...)
+			t.Errorf("#%d: GetInt(%s) caused error: %v, %s.(type) = %T", i, test.path, err, test.path, v)
 		}
 		if in != test.value {
-			t.Errorf("#%d: GetInt(%s)=%d, %v; want %d, %v", i, test.path, in, err, test.value, test.fails)
+			t.Errorf("#%d: GetInt(%s)=%d; want %d", i, test.path, in, test.value)
 		}
 	}
 }
 
-var floatGetTests []TestGet = []TestGet{
-	{[]string{"getters", "float"}, 10.1, false},
-	{[]string{"getters", "int"}, 10.0, false},
-	{[]string{"meta", "foo", "bar"}, 0.0, true},
-	{[]string{"domain"}, 0.0, true},
+func TestGetIntFail(t *testing.T) {
+	var intGetTests []TestGet = []TestGet{
+		{[]string{"meta", "foo", "bar"}, int64(0)},
+		{[]string{"domain"}, int64(0)},
+	}
+	conf, err := readConfig(configs["valid"])
+	if err != nil {
+		t.Errorf("Error loading config: %v", err)
+	}
+
+	for i, test := range intGetTests {
+		in, err := conf.GetInt(test.path...)
+		if err == nil {
+			t.Errorf("#%d: GetInt(%s) doesn't cause error, but it should", i, test.path)
+		} else {
+			t.Logf("Err: %s", err)
+		}
+		if in != test.value {
+			t.Errorf("#%d: GetInt(%s)=%d; want %d", i, test.path, in, test.value)
+		}
+	}
 }
 
-func TestGetFloat(t *testing.T) {
-	conf, err := readConfig(configs["valid"].path)
+func TestGetFloatSuccess(t *testing.T) {
+	var floatGetTests []TestGet = []TestGet{
+		{[]string{"getters", "float"}, 10.1},
+		{[]string{"getters", "int"}, 10.0},
+	}
+
+	conf, err := readConfig(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -297,24 +366,41 @@ func TestGetFloat(t *testing.T) {
 	for i, test := range floatGetTests {
 		f, err := conf.GetFloat(test.path...)
 		if f != test.value {
-			t.Errorf("#%d: GetFloat(%s)=%f, %v; want %v, %v", i, test.path, f, err, test.value, test.fails)
+			t.Errorf("#%d: GetFloat(%s)=%f; want %v", i, test.path, f, test.value)
 		}
-		if test.fails {
-			if err == nil {
-				t.Errorf("#%d: GetFloat(%s) doesn't return any error, but it should fail", i, test.path)
-			}
+		if err != nil {
+			t.Errorf("#%d: GetFloat(%s) returned error: %s", i, test.path, err)
 		}
 	}
 }
 
-var stringGetTests []TestGet = []TestGet{
-	{[]string{"domain"}, "t6", false},
-	{[]string{"meta", "bar", "bazzar"}, "", true},
-	{[]string{"meta"}, "", true},
+func TestGetFloatFail(t *testing.T) {
+	var floatGetTests []TestGet = []TestGet{
+		{[]string{"meta", "foo", "bar"}, 0.0},
+		{[]string{"meta", "bool"}, 0.0},
+	}
+
+	conf, err := readConfig(configs["valid"])
+	if err != nil {
+		t.Errorf("Error loading config: %v", err)
+	}
+
+	for i, test := range floatGetTests {
+		f, err := conf.GetFloat(test.path...)
+		if f != test.value {
+			t.Errorf("#%d: GetFloat(%s)=%f; want %v", i, test.path, f, test.value)
+		}
+		if err == nil {
+			t.Errorf("#%d: GetFloat(%s) doesn't return any error, but it should fail", i, test.path)
+		}
+	}
 }
 
-func TestGetString(t *testing.T) {
-	conf, err := readConfig(configs["valid"].path)
+func TestGetStringSuccess(t *testing.T) {
+	var stringGetTests []TestGet = []TestGet{
+		{[]string{"domain"}, "t6"},
+	}
+	conf, err := readConfig(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -322,12 +408,148 @@ func TestGetString(t *testing.T) {
 	for i, test := range stringGetTests {
 		f, err := conf.GetString(test.path...)
 		if f != test.value {
-			t.Errorf("#%d: GetString(%s)=%s, %v; want %v, %v", i, test.path, f, err, test.value, test.fails)
+			t.Errorf("#%d: GetString(%s)=%s; want %v", i, test.path, f, test.value)
 		}
-		if test.fails {
-			if err == nil {
-				t.Errorf("#%d: GetString(%s) doesn't return any error, but it should fail", i, test.path)
-			}
+		if err != nil {
+			t.Errorf("#%d: GetString(%s) returned error: %s", i, test.path, err)
 		}
 	}
+}
+
+func TestGetStringFail(t *testing.T) {
+	var stringGetTests []TestGet = []TestGet{
+		{[]string{"meta", "bar", "bazzar"}, ""},
+		{[]string{"meta"}, ""},
+	}
+	conf, err := readConfig(configs["valid"])
+	if err != nil {
+		t.Errorf("Error loading config: %v", err)
+	}
+
+	for i, test := range stringGetTests {
+		f, err := conf.GetString(test.path...)
+		if f != test.value {
+			t.Errorf("#%d: GetString(%s)=%s; want %v", i, test.path, f, test.value)
+		}
+		if err == nil {
+			t.Errorf("#%d: GetString(%s) doesn't return any error, but it should fail", i, test.path)
+		}
+	}
+}
+
+func TestGetBoolSuccess(t *testing.T) {
+	var stringGetTests []TestGet = []TestGet{
+		{[]string{"meta", "bool"}, true},
+		{[]string{"meta", "bool_f"}, false},
+	}
+	conf, err := readConfig(configs["valid"])
+	if err != nil {
+		t.Errorf("Error loading config: %v", err)
+	}
+
+	for i, test := range stringGetTests {
+		f, err := conf.GetBool(test.path...)
+		if f != test.value {
+			t.Errorf("#%d: GetBool(%s)=%s; want %v", i, test.path, f, test.value)
+		}
+		if err != nil {
+			t.Errorf("#%d: GetBool(%s) returned error: %s", i, test.path, err)
+		}
+	}
+}
+
+func TestGetBoolFail(t *testing.T) {
+	var stringGetTests []TestGet = []TestGet{
+		{[]string{"meta", "bar", "bazzar"}, false},
+		{[]string{"meta"}, false},
+	}
+	conf, err := readConfig(configs["valid"])
+	if err != nil {
+		t.Errorf("Error loading config: %v", err)
+	}
+
+	for i, test := range stringGetTests {
+		b, err := conf.GetBool(test.path...)
+		t.Logf("b=\"%#v\", b.(type)=\"%T\"", b, b)
+		if b != test.value {
+			t.Errorf("#%d: GetBool(%s)=%v; want %v", i, test.path, b, test.value)
+		}
+		if err == nil {
+			t.Errorf("#%d: GetBool(%s) doesn't return any error, but it should fail", i, test.path)
+		}
+	}
+}
+
+func TestResolveDomainNameSuccess(t *testing.T) {
+	ips, err := ResolveDomainName("ns.s")
+	if err != nil {
+		t.Errorf("Error getting ips for ns.s: %s", err)
+	}
+
+	if !reflect.DeepEqual(ips, []string{"192.168.20.2"}) {
+		t.Errorf("ResolveDomainName(\"ns.s\") returned wrong ips: %s", ips)
+	}
+}
+
+func TestResolveDomainNameFail(t *testing.T) {
+	ips, err := ResolveDomainName("nasos.s")
+	if ips != nil {
+		t.Errorf("ResolveDomainName(\"nasos.s\") returned wrong ips: %s", ips)
+	}
+	if err == nil {
+		t.Errorf("ResolveDomainName(\"nasos.s\") doesn't returned any error, but it should!")
+	}
+
+}
+
+func TestMarshalToJsonReaderSuccess(t *testing.T) {
+	value := map[string]string{"a": "b", "c": "d"}
+	marshaledValue := "{\"a\":\"b\",\"c\":\"d\"}"
+	r, err := MarshalToJsonReader(value)
+	if err != nil {
+		t.Errorf("Error marshaling %#v: %s", value, err)
+	}
+
+	res, _ := ioutil.ReadAll(r)
+
+	if string(res) != marshaledValue {
+		t.Errorf("Marshalled data is wrong: %s != %s", res, marshaledValue)
+	}
+}
+
+type buggyStruct struct {
+	Id int `json:"id"`
+}
+
+func (b buggyStruct) MarshalJSON() ([]byte, error) {
+	return nil, errors.New("Baka!")
+}
+
+func TestMarshalToJsonReaderFail(t *testing.T) {
+	value := buggyStruct{Id: 10}
+	_, err := MarshalToJsonReader(value)
+	if err == nil {
+		t.Errorf("Marshal should return error, but it returns nil")
+	}
+}
+
+func TestToStringSuccess(t *testing.T) {
+	conf, err := readConfig(configs["valid"])
+	if err != nil {
+		t.Errorf("Error reading config")
+	}
+
+	t.Logf("Config: %s", conf)
+}
+
+func TestToStringFail(t *testing.T) {
+	conf, err := readConfig(configs["valid"])
+	if err != nil {
+		t.Errorf("Error reading config")
+	}
+
+	value := buggyStruct{Id: 10}
+	conf.Set(value, "meta", "bug")
+
+	t.Logf("Config: %s", conf)
 }

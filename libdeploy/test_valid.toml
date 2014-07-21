@@ -4,6 +4,8 @@ domain = "t6"
 owner = "e.persienko"
 email = "some@test.ru"
 description = "Tests"
+bool = true
+bool_f = false
 
 [getters]
 float = 10.1

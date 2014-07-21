@@ -95,7 +95,7 @@ func (c Config) GetPath(path ...string) interface{} {
 		}
 	}
 
-	return ptr
+	return nil
 }
 
 func (c Config) GetMap(path ...string) (map[string]interface{}, error) {
