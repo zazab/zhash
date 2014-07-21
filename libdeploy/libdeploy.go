@@ -1,6 +1,11 @@
 package libdeploy
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
 	"net"
 	"strconv"
 	"strings"
@@ -45,4 +50,13 @@ func ResolveDomainName(hostname string) ([]string, error) {
 	}
 
 	return result, nil
+}
+
+func MarshalToJsonReader(value interface{}) (io.Reader, error) {
+	buf, err := json.Marshal(value)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Error marshaling data: %s", err))
+	}
+
+	return bytes.NewBuffer(buf), nil
 }
