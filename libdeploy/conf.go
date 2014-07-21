@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/BurntSushi/toml"
 	"io"
 	"strings"
+
+	"github.com/BurntSushi/toml"
 )
 
 type Config map[string]interface{}
@@ -56,7 +57,6 @@ func (c Config) Reader() io.Reader {
 func (c Config) SetPath(value interface{}, path string) {
 	c.Set(value, strings.Split(path, ".")...)
 }
-
 
 func (c Config) Set(value interface{}, path ...string) {
 	key := ""
@@ -164,6 +164,20 @@ func (c Config) GetStringSlice(path ...string) ([]string, error) {
 		return []string{},
 			errors.New(fmt.Sprintf("Error converting %s to slice",
 				strings.Join(path, ".")))
+	}
+}
+
+func (c Config) GetBool(path ...string) (bool, error) {
+	m := c.GetPath(path...)
+	if m == nil {
+		return false, NewNotFoundError(path)
+	}
+	switch val := m.(type) {
+	case bool:
+		return val, nil
+	default:
+		return false, errors.New(fmt.Sprintf("Error converting %s to bool",
+			strings.Join(path, ".")))
 	}
 }
 
