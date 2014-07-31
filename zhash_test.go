@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-	"time"
 )
 
 func readHash(path string) (Hash, error) {
@@ -53,26 +52,6 @@ func TestValidateInvalid(t *testing.T) {
 	} else {
 		for _, err = range errs {
 			t.Log(err.Error())
-		}
-	}
-}
-
-var parseSetArgsTests = []struct {
-	pathval, path string
-	val           interface{}
-}{
-	{"setter.time:2014-05-09T12:01:05Z", "setter.time", time.Date(2014, 05, 9, 12, 01, 05, 0, time.UTC)},
-	{"setter.int:214", "setter.int", 214},
-	{"setter.float:21.4", "setter.float", 21.4},
-	{"setter.bool:true", "setter.bool", true},
-	{"setter.string:Tests env", "setter.string", "Tests env"},
-}
-
-func TestParseSetArgs(t *testing.T) {
-	for i, test := range parseSetArgsTests {
-		v, p := ParseSetArgument(test.pathval)
-		if v != test.val || p != test.path {
-			t.Errorf("#%d: ParseSetArgument(%s)=%#v,%#v; want %#v, %#v", i, test.pathval, v, p, test.val, test.path)
 		}
 	}
 }
