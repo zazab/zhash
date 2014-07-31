@@ -1,4 +1,4 @@
-package libdeploy
+package zhash
 
 import (
 	"errors"
@@ -10,24 +10,16 @@ import (
 	"time"
 )
 
-type recoverCallback func(r interface{})
-
-func failOnRecover(callback recoverCallback) {
-	if r := recover(); r != nil {
-		callback(r)
-	}
-}
-
-func readConfig(path string) (Config, error) {
-	conf := NewConfig()
+func readHash(path string) (Hash, error) {
+	conf := NewHash()
 	fd, err := os.Open(path)
 	if err != nil {
 		return conf, err
 	}
 	defer fd.Close()
-	err = conf.ReadConfig(fd)
+	err = conf.ReadHash(fd)
 	if err != nil {
-		return NewConfig(), err
+		return NewHash(), err
 	}
 	return conf, nil
 }
@@ -38,7 +30,7 @@ var configs = map[string]string{
 }
 
 func TestValidateValid(t *testing.T) {
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -50,7 +42,7 @@ func TestValidateValid(t *testing.T) {
 }
 
 func TestValidateInvalid(t *testing.T) {
-	conf, err := readConfig(configs["invalid"])
+	conf, err := readHash(configs["invalid"])
 	if err != nil {
 		t.Errorf(" Error loading config: %v", err)
 	}
@@ -96,7 +88,7 @@ var setTests = []struct {
 }
 
 func TestSetPath(t *testing.T) {
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -112,20 +104,20 @@ func TestSetPath(t *testing.T) {
 	}
 }
 
-func TestWriteConfig(t *testing.T) {
-	conf, err := readConfig(configs["valid"])
+func TestWriteHash(t *testing.T) {
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
 	f, _ := os.OpenFile(os.DevNull, os.O_RDWR, 0666)
 	defer f.Close()
-	if err := conf.WriteConfig(f); err != nil {
+	if err := conf.WriteHash(f); err != nil {
 		t.Errorf("Errors while writing config: %s", err.Error())
 	}
 }
 
-func TestConfigReader(t *testing.T) {
-	conf, err := readConfig(configs["valid"])
+func TestHashReader(t *testing.T) {
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -156,7 +148,7 @@ func TestGetPath(t *testing.T) {
 		{[]string{}, nil},
 	}
 
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -180,7 +172,7 @@ func TestGetMapSuccess(t *testing.T) {
 		}},
 	}
 
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -201,7 +193,7 @@ func TestGetMapFail(t *testing.T) {
 		{[]string{"meta", "foo", "bar"}, map[string]interface{}{}},
 		{[]string{"domain"}, map[string]interface{}{}},
 	}
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -224,7 +216,7 @@ func TestGetSliceSuccess(t *testing.T) {
 		{[]string{"resources", "conf", "depends"}, []interface{}{"mysql_single", "mongo_single", "node_single"}},
 	}
 
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -246,7 +238,7 @@ func TestGetSliceFail(t *testing.T) {
 		{[]string{"domain"}, []interface{}{}},
 	}
 
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -268,7 +260,7 @@ func TestGetStringSliceSuccess(t *testing.T) {
 	var stringSliceGetTests []TestGet = []TestGet{
 		{[]string{"resources", "conf", "depends"}, []string{"mysql_single", "mongo_single", "node_single"}},
 	}
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -290,7 +282,7 @@ func TestGetStringSliceFail(t *testing.T) {
 		{[]string{"meta", "foo", "bar"}, []string{}},
 		{[]string{"domain"}, []string{}},
 	}
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -312,7 +304,7 @@ func TestGetIntSuccess(t *testing.T) {
 	var intGetTests []TestGet = []TestGet{
 		{[]string{"getters", "int"}, int64(10)},
 	}
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -334,7 +326,7 @@ func TestGetIntFail(t *testing.T) {
 		{[]string{"meta", "foo", "bar"}, int64(0)},
 		{[]string{"domain"}, int64(0)},
 	}
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -358,7 +350,7 @@ func TestGetFloatSuccess(t *testing.T) {
 		{[]string{"getters", "int"}, 10.0},
 	}
 
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -380,7 +372,7 @@ func TestGetFloatFail(t *testing.T) {
 		{[]string{"meta", "bool"}, 0.0},
 	}
 
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -400,7 +392,7 @@ func TestGetStringSuccess(t *testing.T) {
 	var stringGetTests []TestGet = []TestGet{
 		{[]string{"domain"}, "t6"},
 	}
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -421,7 +413,7 @@ func TestGetStringFail(t *testing.T) {
 		{[]string{"meta", "bar", "bazzar"}, ""},
 		{[]string{"meta"}, ""},
 	}
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -442,7 +434,7 @@ func TestGetBoolSuccess(t *testing.T) {
 		{[]string{"meta", "bool"}, true},
 		{[]string{"meta", "bool_f"}, false},
 	}
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -463,7 +455,7 @@ func TestGetBoolFail(t *testing.T) {
 		{[]string{"meta", "bar", "bazzar"}, false},
 		{[]string{"meta"}, false},
 	}
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error loading config: %v", err)
 	}
@@ -480,41 +472,13 @@ func TestGetBoolFail(t *testing.T) {
 	}
 }
 
-func TestResolveDomainNameSuccess(t *testing.T) {
-	ips, err := ResolveDomainName("ns.s")
+func TestToStringSuccess(t *testing.T) {
+	conf, err := readHash(configs["valid"])
 	if err != nil {
-		t.Errorf("Error getting ips for ns.s: %s", err)
+		t.Errorf("Error reading config")
 	}
 
-	if !reflect.DeepEqual(ips, []string{"192.168.20.2"}) {
-		t.Errorf("ResolveDomainName(\"ns.s\") returned wrong ips: %s", ips)
-	}
-}
-
-func TestResolveDomainNameFail(t *testing.T) {
-	ips, err := ResolveDomainName("nasos.s")
-	if ips != nil {
-		t.Errorf("ResolveDomainName(\"nasos.s\") returned wrong ips: %s", ips)
-	}
-	if err == nil {
-		t.Errorf("ResolveDomainName(\"nasos.s\") doesn't returned any error, but it should!")
-	}
-
-}
-
-func TestMarshalToJsonReaderSuccess(t *testing.T) {
-	value := map[string]string{"a": "b", "c": "d"}
-	marshaledValue := "{\"a\":\"b\",\"c\":\"d\"}"
-	r, err := MarshalToJsonReader(value)
-	if err != nil {
-		t.Errorf("Error marshaling %#v: %s", value, err)
-	}
-
-	res, _ := ioutil.ReadAll(r)
-
-	if string(res) != marshaledValue {
-		t.Errorf("Marshalled data is wrong: %s != %s", res, marshaledValue)
-	}
+	t.Logf("Hash: %s", conf)
 }
 
 type buggyStruct struct {
@@ -525,25 +489,8 @@ func (b buggyStruct) MarshalJSON() ([]byte, error) {
 	return nil, errors.New("Baka!")
 }
 
-func TestMarshalToJsonReaderFail(t *testing.T) {
-	value := buggyStruct{Id: 10}
-	_, err := MarshalToJsonReader(value)
-	if err == nil {
-		t.Errorf("Marshal should return error, but it returns nil")
-	}
-}
-
-func TestToStringSuccess(t *testing.T) {
-	conf, err := readConfig(configs["valid"])
-	if err != nil {
-		t.Errorf("Error reading config")
-	}
-
-	t.Logf("Config: %s", conf)
-}
-
 func TestToStringFail(t *testing.T) {
-	conf, err := readConfig(configs["valid"])
+	conf, err := readHash(configs["valid"])
 	if err != nil {
 		t.Errorf("Error reading config")
 	}
@@ -551,5 +498,5 @@ func TestToStringFail(t *testing.T) {
 	value := buggyStruct{Id: 10}
 	conf.Set(value, "meta", "bug")
 
-	t.Logf("Config: %s", conf)
+	t.Logf("Hash: %s", conf)
 }

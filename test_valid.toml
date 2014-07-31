@@ -1,0 +1,37 @@
+domain = "t6"
+
+[meta]
+owner = "e.persienko"
+email = "some@test.ru"
+description = "Tests"
+bool = true
+bool_f = false
+
+[getters]
+float = 10.1
+int = 10
+intSlice = [10, 12, 14]
+ 
+[resources.mysql_single]
+provider = "dbfarm"
+pool = "mysql"
+ 
+[resources.mongo_single]
+provider = "dbfarm"
+pool = "mongo"
+ 
+[resources.node_single]
+provider = "container"
+pool = "func"
+ 
+[resources.dns]
+depends = ["node_single"]
+provider = "pdns"
+template = "single"
+ 
+[resources.conf]
+depends = ["mysql_single", "mongo_single", "node_single"]
+provider = "chef"
+ 
+[configuration]
+runner = "chef-bootstrap"

@@ -1,4 +1,4 @@
-package libdeploy
+package zhash
 
 import (
 	"bytes"
@@ -11,12 +11,17 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-const REQUIRED = "[REQUIRED]"
+const (
+	REQUIRED    = "[REQUIRED]"
+	TIME_FORMAT = "2006-01-02T15:04:05Z"
+)
 
-type Config map[string]interface{}
+type Hash struct {
+	data map[string]interface{}
+}
 
-func NewConfig() Config {
-	return Config{}
+func NewHash() Hash {
+	return Hash{map[string]interface{}{}}
 }
 
 type NotFoundError struct {
@@ -40,35 +45,33 @@ func (e RequiredError) Error() string {
 		"key -k %s:<value>", e.Path, e.Path)
 }
 
-func (c *Config) ReadConfig(r io.Reader) error {
-	_, err := toml.DecodeReader(r, &c)
+func (c *Hash) ReadHash(r io.Reader) error {
+	_, err := toml.DecodeReader(r, &c.data)
 	return err
 }
 
-func (c Config) WriteConfig(w io.Writer) error {
-	return toml.NewEncoder(w).Encode(c)
+func (c Hash) WriteHash(w io.Writer) error {
+	return toml.NewEncoder(w).Encode(c.data)
 }
 
-func (c Config) Reader() io.Reader {
+func (c Hash) Reader() io.Reader {
 	var buff bytes.Buffer
-	c.WriteConfig(&buff)
+	c.WriteHash(&buff)
 	return &buff
 }
 
-func (c Config) SetPath(value interface{}, path string) {
+func (c Hash) SetPath(value interface{}, path string) {
 	c.Set(value, strings.Split(path, ".")...)
 }
 
-func (c Config) Set(value interface{}, path ...string) {
+func (c Hash) Set(value interface{}, path ...string) {
 	key := ""
-	ptr := map[string]interface{}(c)
+	ptr := map[string]interface{}(c.data)
 	for i, p := range path {
 		if i < len(path)-1 { // middle element
 			switch node := ptr[p].(type) {
 			case map[string]interface{}:
 				ptr = node
-			case Config:
-				ptr = map[string]interface{}(node)
 			default:
 				ptr[p] = map[string]interface{}{}
 				ptr = ptr[p].(map[string]interface{})
@@ -80,8 +83,8 @@ func (c Config) Set(value interface{}, path ...string) {
 	ptr[key] = value
 }
 
-func (c Config) GetPath(path ...string) interface{} {
-	ptr := c
+func (c Hash) GetPath(path ...string) interface{} {
+	ptr := c.data
 	for i, p := range path {
 		if i == len(path)-1 {
 			return ptr[p]
@@ -98,7 +101,7 @@ func (c Config) GetPath(path ...string) interface{} {
 	return nil
 }
 
-func (c Config) GetMap(path ...string) (map[string]interface{}, error) {
+func (c Hash) GetMap(path ...string) (map[string]interface{}, error) {
 	m := c.GetPath(path...)
 	if m == nil {
 		return map[string]interface{}{}, NewNotFoundError(path)
@@ -113,7 +116,7 @@ func (c Config) GetMap(path ...string) (map[string]interface{}, error) {
 	}
 }
 
-func (c Config) GetString(path ...string) (string, error) {
+func (c Hash) GetString(path ...string) (string, error) {
 	m := c.GetPath(path...)
 	if m == nil {
 		return "", NewNotFoundError(path)
@@ -127,7 +130,7 @@ func (c Config) GetString(path ...string) (string, error) {
 	}
 }
 
-func (c Config) GetSlice(path ...string) ([]interface{}, error) {
+func (c Hash) GetSlice(path ...string) ([]interface{}, error) {
 	m := c.GetPath(path...)
 	if m == nil {
 		return []interface{}{}, NewNotFoundError(path)
@@ -142,7 +145,7 @@ func (c Config) GetSlice(path ...string) ([]interface{}, error) {
 	}
 }
 
-func (c Config) GetStringSlice(path ...string) ([]string, error) {
+func (c Hash) GetStringSlice(path ...string) ([]string, error) {
 	m := c.GetPath(path...)
 	if m == nil {
 		return []string{}, NewNotFoundError(path)
@@ -168,7 +171,7 @@ func (c Config) GetStringSlice(path ...string) ([]string, error) {
 	}
 }
 
-func (c Config) GetBool(path ...string) (bool, error) {
+func (c Hash) GetBool(path ...string) (bool, error) {
 	m := c.GetPath(path...)
 	if m == nil {
 		return false, NewNotFoundError(path)
@@ -182,7 +185,7 @@ func (c Config) GetBool(path ...string) (bool, error) {
 	}
 }
 
-func (c Config) GetInt(path ...string) (int64, error) {
+func (c Hash) GetInt(path ...string) (int64, error) {
 	m := c.GetPath(path...)
 	if m == nil {
 		return 0, NewNotFoundError(path)
@@ -198,7 +201,7 @@ func (c Config) GetInt(path ...string) (int64, error) {
 	}
 }
 
-func (c Config) GetFloat(path ...string) (float64, error) {
+func (c Hash) GetFloat(path ...string) (float64, error) {
 	m := c.GetPath(path...)
 	if m == nil {
 		return 0, NewNotFoundError(path)
@@ -216,11 +219,11 @@ func (c Config) GetFloat(path ...string) (float64, error) {
 	}
 }
 
-func (c Config) Validate() (errs []error) {
+func (c Hash) Validate() (errs []error) {
 	nodes := []interface{}{}
 	paths := []string{}
 
-	for p, v := range c {
+	for p, v := range c.data {
 		nodes = append(nodes, v)
 		paths = append(paths, p)
 	}
@@ -247,7 +250,7 @@ func (c Config) Validate() (errs []error) {
 	return
 }
 
-func (c Config) String() string {
+func (c Hash) String() string {
 	buf, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return "Error converting config to json"
