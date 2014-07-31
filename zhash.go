@@ -11,10 +11,7 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-const (
-	REQUIRED    = "[REQUIRED]"
-	TIME_FORMAT = "2006-01-02T15:04:05Z"
-)
+const REQUIRED = "[REQUIRED]"
 
 type Hash struct {
 	data map[string]interface{}
@@ -22,6 +19,10 @@ type Hash struct {
 
 func NewHash() Hash {
 	return Hash{map[string]interface{}{}}
+}
+
+func HashFromMap(m map[string]interface{}) Hash {
+	return Hash{m}
 }
 
 type NotFoundError struct {
