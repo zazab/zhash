@@ -1,6 +1,7 @@
 package zhash
 
 import (
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -478,4 +479,26 @@ func TestToStringFail(t *testing.T) {
 	conf.Set(value, "meta", "bug")
 
 	t.Logf("Hash: %s", conf)
+}
+
+func TestMarshalToJSON(t *testing.T) {
+	hash := HashFromMap(map[string]interface{}{
+		"rec1": "val one",
+		"rec2": map[string]interface{}{
+			"sub_rec1": 2,
+			"sub_rec2": "string",
+		},
+	})
+
+	jsonText := "{\"rec1\":\"val one\",\"rec2\":{\"sub_rec1\":2,\"sub_rec2\":\"string\"}}"
+
+	convert, err := json.Marshal(hash)
+	if err != nil {
+		t.Error("Error marshalling hash to json:", err)
+	}
+
+	if string(convert) != jsonText {
+		t.Errorf("Marshalled json differs from wanted:\nWant: %s\nGot: %s",
+			jsonText, string(convert))
+	}
 }

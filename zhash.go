@@ -259,3 +259,7 @@ func (c Hash) String() string {
 
 	return string(buf)
 }
+
+func (c Hash) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.data)
+}
