@@ -25,6 +25,15 @@ func HashFromMap(m map[string]interface{}) Hash {
 	return Hash{m}
 }
 
+func IsNotFound(err error) bool {
+	switch err.(type) {
+	case NotFoundError:
+		return true
+	default:
+		return false
+	}
+}
+
 type NotFoundError struct {
 	Path []string
 }
