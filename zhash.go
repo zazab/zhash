@@ -84,6 +84,30 @@ func (c Hash) Set(value interface{}, path ...string) {
 	ptr[key] = value
 }
 
+func (h Hash) Delete(path ...string) error {
+	l := len(path)
+	if l == 1 {
+		delete(h.data, path[0])
+		return nil
+	}
+
+	elemPath := path[l-1]
+	parentPath := path[:l-1]
+	parent := h.GetPath(parentPath...)
+
+	if parent == nil {
+		return nil
+	}
+
+	switch val := parent.(type) {
+	case map[string]interface{}:
+		delete(val, elemPath)
+		return nil
+	default:
+		return errors.New(fmt.Sprintf("Wrong parent type (%T)", parent))
+	}
+}
+
 func (c Hash) GetPath(path ...string) interface{} {
 	ptr := c.data
 	for i, p := range path {
