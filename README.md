@@ -31,4 +31,4 @@ And use it through different getters and setters:
     hash.Set("Some new var", "path", "to", "existing", "or", "new", "element")
 ```
 
-
+All the things is in dev branch still.
