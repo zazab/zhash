@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -91,6 +92,31 @@ func (c Hash) Set(value interface{}, path ...string) {
 	}
 
 	ptr[key] = value
+}
+
+func (h Hash) AppendSlice(val interface{}, path ...string) error {
+	slice, err := h.GetSlice(path...)
+	if err != nil {
+		if !IsNotFound(err) {
+			return err
+		}
+	}
+
+	slice = append(slice, val)
+
+	h.Set(slice, path...)
+	return nil
+}
+
+func (h Hash) AppendStringSlice(val string, path ...string) {
+	slice, err := h.GetStringSlice(path...)
+	if err != nil {
+		log.Println("Error getting slice:", err)
+	}
+
+	slice = append(slice, val)
+
+	h.Set(slice, path...)
 }
 
 func (h Hash) Delete(path ...string) error {
