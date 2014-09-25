@@ -26,25 +26,17 @@ func HashFromMap(m map[string]interface{}) Hash {
 	return Hash{m}
 }
 
+type notFoundError struct {
+	path []string
+}
+
+func (e notFoundError) Error() string {
+	return fmt.Sprintf("Value for %s not found", strings.Join(e.path, "."))
+}
+
 func IsNotFound(err error) bool {
-	switch err.(type) {
-	case NotFoundError:
-		return true
-	default:
-		return false
-	}
-}
-
-type NotFoundError struct {
-	Path []string
-}
-
-func (e NotFoundError) Error() string {
-	return fmt.Sprintf("Value for %s not found", strings.Join(e.Path, "."))
-}
-
-func NewNotFoundError(path []string) error {
-	return NotFoundError{path}
+	_, ok := err.(notFoundError)
+	return ok
 }
 
 type RequiredError struct {
@@ -164,7 +156,7 @@ func (c Hash) GetPath(path ...string) interface{} {
 func (c Hash) GetMap(path ...string) (map[string]interface{}, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return map[string]interface{}{}, NewNotFoundError(path)
+		return map[string]interface{}{}, notFoundError{path}
 	}
 	switch val := m.(type) {
 	case map[string]interface{}:
@@ -179,7 +171,7 @@ func (c Hash) GetMap(path ...string) (map[string]interface{}, error) {
 func (c Hash) GetString(path ...string) (string, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return "", NewNotFoundError(path)
+		return "", notFoundError{path}
 	}
 	switch val := m.(type) {
 	case string:
@@ -193,7 +185,7 @@ func (c Hash) GetString(path ...string) (string, error) {
 func (c Hash) GetSlice(path ...string) ([]interface{}, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return []interface{}{}, NewNotFoundError(path)
+		return []interface{}{}, notFoundError{path}
 	}
 	switch val := m.(type) {
 	case []interface{}:
@@ -208,7 +200,7 @@ func (c Hash) GetSlice(path ...string) ([]interface{}, error) {
 func (c Hash) GetStringSlice(path ...string) ([]string, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return []string{}, NewNotFoundError(path)
+		return []string{}, notFoundError{path}
 	}
 	switch val := m.(type) {
 	case []interface{}:
@@ -234,7 +226,7 @@ func (c Hash) GetStringSlice(path ...string) ([]string, error) {
 func (c Hash) GetBool(path ...string) (bool, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return false, NewNotFoundError(path)
+		return false, notFoundError{path}
 	}
 	switch val := m.(type) {
 	case bool:
@@ -248,7 +240,7 @@ func (c Hash) GetBool(path ...string) (bool, error) {
 func (c Hash) GetInt(path ...string) (int64, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return 0, NewNotFoundError(path)
+		return 0, notFoundError{path}
 	}
 	switch val := m.(type) {
 	case int:
@@ -264,7 +256,7 @@ func (c Hash) GetInt(path ...string) (int64, error) {
 func (c Hash) GetFloat(path ...string) (float64, error) {
 	m := c.GetPath(path...)
 	if m == nil {
-		return 0, NewNotFoundError(path)
+		return 0, notFoundError{path}
 	}
 	switch val := m.(type) {
 	case float64:
