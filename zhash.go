@@ -7,8 +7,6 @@ import (
 	"strings"
 )
 
-const REQUIRED = "[REQUIRED]"
-
 type Hash struct {
 	data      map[string]interface{}
 	marshal   Marshaller
@@ -34,15 +32,6 @@ func (e notFoundError) Error() string {
 func IsNotFound(err error) bool {
 	_, ok := err.(notFoundError)
 	return ok
-}
-
-type RequiredError struct {
-	Path string
-}
-
-func (e RequiredError) Error() string {
-	return fmt.Sprintf("%s is required, please specify it by adding "+
-		"key -k %s:<value>", e.Path, e.Path)
 }
 
 func (c Hash) SetPath(value interface{}, path string) {
@@ -105,7 +94,7 @@ func (h Hash) Delete(path ...string) error {
 	parent := h.GetPath(parentPath...)
 
 	if parent == nil {
-		return nil
+		return notFoundError{path}
 	}
 
 	switch val := parent.(type) {
@@ -113,7 +102,9 @@ func (h Hash) Delete(path ...string) error {
 		delete(val, elemPath)
 		return nil
 	default:
-		return errors.New(fmt.Sprintf("Wrong parent type (%T)", parent))
+		errmsg := fmt.Sprintf("Cannot delete key %s from %T, "+
+			"expected map[string]interface{}", parent)
+		return errors.New(errmsg)
 	}
 }
 
@@ -253,35 +244,4 @@ func (c Hash) GetFloat(path ...string) (float64, error) {
 		return 0, errors.New(fmt.Sprintf("Error converting %s to float",
 			strings.Join(path, ".")))
 	}
-}
-
-func (c Hash) Validate() (errs []error) {
-	nodes := []interface{}{}
-	paths := []string{}
-
-	for p, v := range c.data {
-		nodes = append(nodes, v)
-		paths = append(paths, p)
-	}
-
-	for len(nodes) > 0 {
-		node := nodes[len(nodes)-1]
-		path := paths[len(paths)-1]
-		nodes = nodes[:len(nodes)-1]
-		paths = paths[:len(paths)-1]
-
-		switch inner := node.(type) {
-		case map[string]interface{}:
-			for k, n := range inner {
-				nodes = append(nodes, n)
-				paths = append(paths, path+"."+k)
-			}
-		case string:
-			if inner == REQUIRED {
-				errs = append(errs, RequiredError{path})
-			}
-		}
-	}
-
-	return
 }
