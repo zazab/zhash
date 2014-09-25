@@ -1,29 +1,26 @@
 package zhash
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"strings"
-
-	"github.com/BurntSushi/toml"
 )
 
 const REQUIRED = "[REQUIRED]"
 
 type Hash struct {
-	data map[string]interface{}
+	data      map[string]interface{}
+	marshal   Marshaller
+	unmarshal Unmarshaller
 }
 
-func NewHash() Hash {
-	return Hash{map[string]interface{}{}}
+func NewHash(m Marshaller, u Unmarshaller) Hash {
+	return Hash{map[string]interface{}{}, m, u}
 }
 
-func HashFromMap(m map[string]interface{}) Hash {
-	return Hash{m}
+func HashFromMap(ma map[string]interface{}, m Marshaller, u Unmarshaller) Hash {
+	return Hash{ma, m, u}
 }
 
 type notFoundError struct {
@@ -46,21 +43,6 @@ type RequiredError struct {
 func (e RequiredError) Error() string {
 	return fmt.Sprintf("%s is required, please specify it by adding "+
 		"key -k %s:<value>", e.Path, e.Path)
-}
-
-func (c *Hash) ReadHash(r io.Reader) error {
-	_, err := toml.DecodeReader(r, &c.data)
-	return err
-}
-
-func (c Hash) WriteHash(w io.Writer) error {
-	return toml.NewEncoder(w).Encode(c.data)
-}
-
-func (c Hash) Reader() io.Reader {
-	var buff bytes.Buffer
-	c.WriteHash(&buff)
-	return &buff
 }
 
 func (c Hash) SetPath(value interface{}, path string) {
@@ -203,6 +185,8 @@ func (c Hash) GetStringSlice(path ...string) ([]string, error) {
 		return []string{}, notFoundError{path}
 	}
 	switch val := m.(type) {
+	case []string:
+		return val, nil
 	case []interface{}:
 		sl := []string{}
 		for _, v := range val {
@@ -300,17 +284,4 @@ func (c Hash) Validate() (errs []error) {
 	}
 
 	return
-}
-
-func (c Hash) String() string {
-	buf, err := json.MarshalIndent(c, "", "  ")
-	if err != nil {
-		return "Error converting config to json"
-	}
-
-	return string(buf)
-}
-
-func (c Hash) MarshalJSON() ([]byte, error) {
-	return json.Marshal(c.data)
 }
