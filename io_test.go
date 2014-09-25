@@ -68,8 +68,8 @@ func TestReadHashFailReaderErr(t *testing.T) {
 }
 
 func TestHashReader(t *testing.T) {
-	conf := HashFromMap(testMap, nil, nil)
-	r := conf.Reader()
+	hash := HashFromMap(testMap, nil, nil)
+	r := hash.Reader()
 	f, err := os.OpenFile(os.DevNull, os.O_RDWR, 0666)
 	if err != nil {
 		t.Error("Error opening DevNull:", err)
@@ -77,15 +77,15 @@ func TestHashReader(t *testing.T) {
 	defer f.Close()
 	buf, err := ioutil.ReadAll(r)
 	if err != nil {
-		t.Error("Error reading from conf.Reader():", err)
+		t.Error("Error reading from hash.Reader():", err)
 	}
 	f.Write(buf)
 }
 
 func TestToStringSuccess(t *testing.T) {
-	conf := HashFromMap(testMap, nil, nil)
+	hash := HashFromMap(testMap, nil, nil)
 
-	t.Logf("Hash: %s", conf)
+	t.Logf("Hash: %s", hash)
 }
 
 type buggyStruct struct {
@@ -97,12 +97,12 @@ func (b buggyStruct) MarshalJSON() ([]byte, error) {
 }
 
 func TestToStringFail(t *testing.T) {
-	conf := NewHash(nil, nil)
+	hash := NewHash(nil, nil)
 
 	value := buggyStruct{Id: 10}
-	conf.Set(value, "meta", "bug")
+	hash.Set(value, "meta", "bug")
 
-	t.Logf("Hash: %s", conf)
+	t.Logf("Hash: %s", hash)
 }
 
 func TestToJson(t *testing.T) {
@@ -128,21 +128,21 @@ func TestToJson(t *testing.T) {
 }
 
 func TestWriteHash(t *testing.T) {
-	conf := HashFromMap(testMap, nil, nil)
-	conf.SetMarshallerFunc(json.Marshal)
+	hash := HashFromMap(testMap, nil, nil)
+	hash.SetMarshallerFunc(json.Marshal)
 	f, _ := os.OpenFile(os.DevNull, os.O_RDWR, 0666)
 	defer f.Close()
-	if err := conf.WriteHash(f); err != nil {
-		t.Errorf("Errors while writing config: %s", err.Error())
+	if err := hash.WriteHash(f); err != nil {
+		t.Errorf("Errors while writing hashig: %s", err.Error())
 	}
 }
 
 func TestWriteHashError(t *testing.T) {
-	conf := NewHash(json.Marshal, nil)
-	conf.Set(buggyStruct{10}, "bug")
+	hash := NewHash(json.Marshal, nil)
+	hash.Set(buggyStruct{10}, "bug")
 	f, _ := os.OpenFile(os.DevNull, os.O_RDWR, 0666)
 	defer f.Close()
-	if err := conf.WriteHash(f); err == nil {
+	if err := hash.WriteHash(f); err == nil {
 		t.Errorf("No error while marshalling buggyStruct!")
 	}
 }

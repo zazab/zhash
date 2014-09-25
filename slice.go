@@ -27,6 +27,12 @@ func (c Hash) GetIntSlice(path ...string) ([]int64, error) {
 		return []int64{}, notFoundError{path}
 	}
 	switch val := m.(type) {
+	case []int:
+		sl := []int64{}
+		for _, v := range val {
+			sl = append(sl, int64(v))
+		}
+		return sl, nil
 	case []int64:
 		return val, nil
 	case []interface{}:
@@ -126,7 +132,9 @@ func (h Hash) AppendSlice(val interface{}, path ...string) error {
 func (h Hash) AppendIntSlice(val int64, path ...string) error {
 	slice, err := h.GetIntSlice(path...)
 	if err != nil {
-		return err
+		if !IsNotFound(err) {
+			return err
+		}
 	}
 
 	slice = append(slice, val)
@@ -137,7 +145,9 @@ func (h Hash) AppendIntSlice(val int64, path ...string) error {
 func (h Hash) AppendFloatSlice(val float64, path ...string) error {
 	slice, err := h.GetFloatSlice(path...)
 	if err != nil {
-		return err
+		if !IsNotFound(err) {
+			return err
+		}
 	}
 
 	slice = append(slice, val)
@@ -149,7 +159,9 @@ func (h Hash) AppendFloatSlice(val float64, path ...string) error {
 func (h Hash) AppendStringSlice(val string, path ...string) error {
 	slice, err := h.GetStringSlice(path...)
 	if err != nil {
-		return err
+		if !IsNotFound(err) {
+			return err
+		}
 	}
 
 	slice = append(slice, val)
