@@ -3,7 +3,6 @@ package zhash
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 )
 
@@ -55,31 +54,6 @@ func (c Hash) Set(value interface{}, path ...string) {
 	}
 
 	ptr[key] = value
-}
-
-func (h Hash) AppendSlice(val interface{}, path ...string) error {
-	slice, err := h.GetSlice(path...)
-	if err != nil {
-		if !IsNotFound(err) {
-			return err
-		}
-	}
-
-	slice = append(slice, val)
-
-	h.Set(slice, path...)
-	return nil
-}
-
-func (h Hash) AppendStringSlice(val string, path ...string) {
-	slice, err := h.GetStringSlice(path...)
-	if err != nil {
-		log.Println("Error getting slice:", err)
-	}
-
-	slice = append(slice, val)
-
-	h.Set(slice, path...)
 }
 
 func (h Hash) Delete(path ...string) error {
@@ -152,49 +126,6 @@ func (c Hash) GetString(path ...string) (string, error) {
 	default:
 		return "", errors.New(fmt.Sprintf("Error converting %s to string",
 			strings.Join(path, ".")))
-	}
-}
-
-func (c Hash) GetSlice(path ...string) ([]interface{}, error) {
-	m := c.GetPath(path...)
-	if m == nil {
-		return []interface{}{}, notFoundError{path}
-	}
-	switch val := m.(type) {
-	case []interface{}:
-		return val, nil
-	default:
-		return []interface{}{},
-			errors.New(fmt.Sprintf("Error converting %s to slice",
-				strings.Join(path, ".")))
-	}
-}
-
-func (c Hash) GetStringSlice(path ...string) ([]string, error) {
-	m := c.GetPath(path...)
-	if m == nil {
-		return []string{}, notFoundError{path}
-	}
-	switch val := m.(type) {
-	case []string:
-		return val, nil
-	case []interface{}:
-		sl := []string{}
-		for _, v := range val {
-			switch s := v.(type) {
-			case string:
-				sl = append(sl, s)
-			default:
-				return []string{}, errors.New(
-					fmt.Sprintf("Error converting %s to string slice",
-						strings.Join(path, ".")))
-			}
-		}
-		return sl, nil
-	default:
-		return []string{},
-			errors.New(fmt.Sprintf("Error converting %s to slice",
-				strings.Join(path, ".")))
 	}
 }
 
