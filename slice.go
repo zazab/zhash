@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-func (c Hash) GetSlice(path ...string) ([]interface{}, error) {
-	m := c.GetPath(path...)
+func (h Hash) GetSlice(path ...string) ([]interface{}, error) {
+	m := h.GetPath(path...)
 	if m == nil {
 		return []interface{}{}, notFoundError{path}
 	}
@@ -21,8 +21,8 @@ func (c Hash) GetSlice(path ...string) ([]interface{}, error) {
 	}
 }
 
-func (c Hash) GetIntSlice(path ...string) ([]int64, error) {
-	m := c.GetPath(path...)
+func (h Hash) GetIntSlice(path ...string) ([]int64, error) {
+	m := h.GetPath(path...)
 	if m == nil {
 		return []int64{}, notFoundError{path}
 	}
@@ -57,8 +57,8 @@ func (c Hash) GetIntSlice(path ...string) ([]int64, error) {
 	}
 }
 
-func (c Hash) GetFloatSlice(path ...string) ([]float64, error) {
-	m := c.GetPath(path...)
+func (h Hash) GetFloatSlice(path ...string) ([]float64, error) {
+	m := h.GetPath(path...)
 	if m == nil {
 		return []float64{}, notFoundError{path}
 	}
@@ -86,8 +86,8 @@ func (c Hash) GetFloatSlice(path ...string) ([]float64, error) {
 	}
 }
 
-func (c Hash) GetStringSlice(path ...string) ([]string, error) {
-	m := c.GetPath(path...)
+func (h Hash) GetStringSlice(path ...string) ([]string, error) {
+	m := h.GetPath(path...)
 	if m == nil {
 		return []string{}, notFoundError{path}
 	}

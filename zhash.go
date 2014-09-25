@@ -33,13 +33,13 @@ func IsNotFound(err error) bool {
 	return ok
 }
 
-func (c Hash) SetPath(value interface{}, path string) {
-	c.Set(value, strings.Split(path, ".")...)
+func (h Hash) SetPath(value interface{}, path string) {
+	h.Set(value, strings.Split(path, ".")...)
 }
 
-func (c Hash) Set(value interface{}, path ...string) {
+func (h Hash) Set(value interface{}, path ...string) {
 	key := ""
-	ptr := map[string]interface{}(c.data)
+	ptr := map[string]interface{}(h.data)
 	for i, p := range path {
 		if i < len(path)-1 { // middle element
 			switch node := ptr[p].(type) {
@@ -82,8 +82,8 @@ func (h Hash) Delete(path ...string) error {
 	}
 }
 
-func (c Hash) GetPath(path ...string) interface{} {
-	ptr := c.data
+func (h Hash) GetPath(path ...string) interface{} {
+	ptr := h.data
 	for i, p := range path {
 		if i == len(path)-1 {
 			return ptr[p]
@@ -100,8 +100,8 @@ func (c Hash) GetPath(path ...string) interface{} {
 	return nil
 }
 
-func (c Hash) GetMap(path ...string) (map[string]interface{}, error) {
-	m := c.GetPath(path...)
+func (h Hash) GetMap(path ...string) (map[string]interface{}, error) {
+	m := h.GetPath(path...)
 	if m == nil {
 		return map[string]interface{}{}, notFoundError{path}
 	}
@@ -115,8 +115,8 @@ func (c Hash) GetMap(path ...string) (map[string]interface{}, error) {
 	}
 }
 
-func (c Hash) GetString(path ...string) (string, error) {
-	m := c.GetPath(path...)
+func (h Hash) GetString(path ...string) (string, error) {
+	m := h.GetPath(path...)
 	if m == nil {
 		return "", notFoundError{path}
 	}
@@ -129,8 +129,8 @@ func (c Hash) GetString(path ...string) (string, error) {
 	}
 }
 
-func (c Hash) GetBool(path ...string) (bool, error) {
-	m := c.GetPath(path...)
+func (h Hash) GetBool(path ...string) (bool, error) {
+	m := h.GetPath(path...)
 	if m == nil {
 		return false, notFoundError{path}
 	}
@@ -143,8 +143,8 @@ func (c Hash) GetBool(path ...string) (bool, error) {
 	}
 }
 
-func (c Hash) GetInt(path ...string) (int64, error) {
-	m := c.GetPath(path...)
+func (h Hash) GetInt(path ...string) (int64, error) {
+	m := h.GetPath(path...)
 	if m == nil {
 		return 0, notFoundError{path}
 	}
@@ -159,8 +159,8 @@ func (c Hash) GetInt(path ...string) (int64, error) {
 	}
 }
 
-func (c Hash) GetFloat(path ...string) (float64, error) {
-	m := c.GetPath(path...)
+func (h Hash) GetFloat(path ...string) (float64, error) {
+	m := h.GetPath(path...)
 	if m == nil {
 		return 0, notFoundError{path}
 	}
