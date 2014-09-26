@@ -15,7 +15,8 @@ func TestReadHashSuccess(t *testing.T) {
 	}
 	defer fd.Close()
 
-	h := NewHash(nil, json.Unmarshal)
+	h := NewHash()
+	h.SetUnmarshallerFunc(json.Unmarshal)
 	err = h.ReadHash(fd)
 	if err != nil {
 		t.Error("Error reading hash!")
@@ -29,7 +30,8 @@ func TestReadHashFailParse(t *testing.T) {
 	}
 	defer fd.Close()
 
-	h := NewHash(nil, json.Unmarshal)
+	h := NewHash()
+	h.SetUnmarshallerFunc(json.Unmarshal)
 	err = h.ReadHash(fd)
 	if err == nil {
 		t.Error("Hash readed from corrupted source!")
@@ -43,7 +45,7 @@ func TestReadHashFailNoUnmarshaller(t *testing.T) {
 	}
 	defer fd.Close()
 
-	h := NewHash(nil, nil)
+	h := NewHash()
 	err = h.ReadHash(fd)
 	if err == nil {
 		t.Error("Hash readed from corrupted source!")
@@ -59,7 +61,7 @@ func (c corruptedReader) Read(b []byte) (int, error) {
 func TestReadHashFailReaderErr(t *testing.T) {
 	r := corruptedReader("aaA")
 
-	h := NewHash(nil, nil)
+	h := NewHash()
 	h.SetUnmarshallerFunc(json.Unmarshal)
 	err := h.ReadHash(r)
 	if err == nil {
@@ -68,8 +70,12 @@ func TestReadHashFailReaderErr(t *testing.T) {
 }
 
 func TestHashReader(t *testing.T) {
-	hash := HashFromMap(testMap, nil, nil)
-	r := hash.Reader()
+	hash := HashFromMap(testMap)
+	hash.SetMarshallerFunc(json.Marshal)
+	r, err := hash.Reader()
+	if err != nil {
+		t.Error("Error marshalling Hash")
+	}
 	f, err := os.OpenFile(os.DevNull, os.O_RDWR, 0666)
 	if err != nil {
 		t.Error("Error opening DevNull:", err)
@@ -83,7 +89,7 @@ func TestHashReader(t *testing.T) {
 }
 
 func TestToStringSuccess(t *testing.T) {
-	hash := HashFromMap(testMap, nil, nil)
+	hash := HashFromMap(testMap)
 
 	t.Logf("Hash: %s", hash)
 }
@@ -97,7 +103,7 @@ func (b buggyStruct) MarshalJSON() ([]byte, error) {
 }
 
 func TestToStringFail(t *testing.T) {
-	hash := NewHash(nil, nil)
+	hash := NewHash()
 
 	value := buggyStruct{Id: 10}
 	hash.Set(value, "meta", "bug")
@@ -112,7 +118,7 @@ func TestToJson(t *testing.T) {
 			"sub_rec1": 2,
 			"sub_rec2": "string",
 		},
-	}, json.Marshal, json.Unmarshal)
+	})
 
 	jsonText := "{\"rec1\":\"val one\",\"rec2\":{\"sub_rec1\":2,\"sub_rec2\":\"string\"}}"
 
@@ -128,7 +134,7 @@ func TestToJson(t *testing.T) {
 }
 
 func TestWriteHash(t *testing.T) {
-	hash := HashFromMap(testMap, nil, nil)
+	hash := HashFromMap(testMap)
 	hash.SetMarshallerFunc(json.Marshal)
 	f, _ := os.OpenFile(os.DevNull, os.O_RDWR, 0666)
 	defer f.Close()
@@ -138,11 +144,21 @@ func TestWriteHash(t *testing.T) {
 }
 
 func TestWriteHashError(t *testing.T) {
-	hash := NewHash(json.Marshal, nil)
+	hash := NewHash()
+	hash.SetMarshallerFunc(json.Marshal)
 	hash.Set(buggyStruct{10}, "bug")
 	f, _ := os.OpenFile(os.DevNull, os.O_RDWR, 0666)
 	defer f.Close()
 	if err := hash.WriteHash(f); err == nil {
 		t.Errorf("No error while marshalling buggyStruct!")
+	}
+}
+
+func TestWriteHashNoMarshaller(t *testing.T) {
+	hash := HashFromMap(testMap)
+	f, _ := os.OpenFile(os.DevNull, os.O_RDWR, 0666)
+	defer f.Close()
+	if err := hash.WriteHash(f); err == nil {
+		t.Errorf("WriteHash doesn't return any error, but should")
 	}
 }

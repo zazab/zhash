@@ -2,7 +2,6 @@ package zhash
 
 import (
 	"reflect"
-	"strings"
 	"testing"
 )
 
@@ -33,25 +32,25 @@ var testMap = map[string]interface{}{
 	},
 }
 
-func TestSetPath(t *testing.T) {
+func TestSet(t *testing.T) {
 	tests := []struct {
-		path  string
+		path  []string
 		value interface{}
 	}{
-		{"string", "s@t.r"},
-		{"map.val1", 10},
-		{"map.val2", map[string]interface{}{"provider": "bar", "pool": "baz"}},
-		{"foo.bar.baz", 10.1},
+		{[]string{"string"}, "s@t.r"},
+		{[]string{"map", "val1"}, 10},
+		{[]string{"map", "val2"}, map[string]interface{}{"provider": "bar", "pool": "baz"}},
+		{[]string{"foo", "bar", "baz"}, 10.1},
 	}
 
 	m := map[string]interface{}{}
-	hash := HashFromMap(m, nil, nil)
+	hash := HashFromMap(m)
 	for _, test := range tests {
-		hash.SetPath(test.value, test.path)
+		hash.Set(test.value, test.path...)
 	}
 
 	for i, test := range tests {
-		val := hash.GetPath(strings.Split(test.path, ".")...)
+		val := hash.Get(test.path...)
 		if !reflect.DeepEqual(val, test.value) {
 			t.Errorf("#%d: hash[%s]%#v != %#v", i, test.path, val, test.value)
 		}
@@ -59,7 +58,7 @@ func TestSetPath(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	hash := HashFromMap(testMap, nil, nil)
+	hash := HashFromMap(testMap)
 	err := hash.Delete("toDel")
 	if err != nil {
 		t.Errorf("Error deleting toDel")
@@ -93,10 +92,10 @@ func TestGetPath(t *testing.T) {
 		{[]string{"map", "val3"}, nil, false},
 		{[]string{}, nil, false},
 	}
-	hash := HashFromMap(testMap, nil, nil)
+	hash := HashFromMap(testMap)
 
 	for i, test := range tests {
-		value := hash.GetPath(test.path...)
+		value := hash.Get(test.path...)
 		if value != test.value {
 			t.Errorf("#%d: GetPath(%s)=%#v; want %#v", i, test.path, value, test.value)
 		}
@@ -104,7 +103,7 @@ func TestGetPath(t *testing.T) {
 }
 
 func TestNotFound(t *testing.T) {
-	hash := HashFromMap(map[string]interface{}{"value": 10.1}, nil, nil)
+	hash := HashFromMap(map[string]interface{}{"value": 10.1})
 	_, err := hash.GetInt("val")
 	if !IsNotFound(err) {
 		t.Errorf("IsNotFound returned false, but err is notFoundError")
@@ -136,8 +135,26 @@ func checkGet(n int, test getTest, v interface{}, err error, fn string, t *testi
 	}
 }
 
+func TestGetRoot(t *testing.T) {
+	hash := HashFromMap(testMap)
+	root := hash.GetRoot()
+
+	if !reflect.DeepEqual(root, testMap) {
+		t.Errorf("GetRoot()=%#v; want %#v", root, testMap)
+	}
+}
+
+func TestGetRootEmpty(t *testing.T) {
+	hash := NewHash()
+	root := hash.GetRoot()
+
+	if !reflect.DeepEqual(root, map[string]interface{}{}) {
+		t.Errorf("GetRoot()=%#v; want %#v", root, map[string]interface{}{})
+	}
+}
+
 func TestGetMap(t *testing.T) {
-	hash := HashFromMap(testMap, nil, nil)
+	hash := HashFromMap(testMap)
 	tests := []getTest{
 		{[]string{"map"}, map[string]interface{}{
 			"val1": 10,
@@ -166,7 +183,7 @@ func TestGetInt(t *testing.T) {
 		"map": map[string]interface{}{"val1": int64(12)},
 	}
 
-	hash := HashFromMap(h, nil, nil)
+	hash := HashFromMap(h)
 
 	for i, test := range tests {
 		in, err := hash.GetInt(test.path...)
@@ -175,7 +192,7 @@ func TestGetInt(t *testing.T) {
 }
 
 func TestGetFloat(t *testing.T) {
-	hash := HashFromMap(testMap, nil, nil)
+	hash := HashFromMap(testMap)
 	tests := []getTest{
 		{[]string{"float"}, 10.1, false},
 		{[]string{"int"}, 10.0, false},
@@ -191,7 +208,7 @@ func TestGetFloat(t *testing.T) {
 }
 
 func TestGetString(t *testing.T) {
-	hash := HashFromMap(testMap, nil, nil)
+	hash := HashFromMap(testMap)
 	tests := []getTest{
 		{[]string{"string"}, "some text", false},
 		{[]string{"bar", "baz"}, "", true},
@@ -206,7 +223,7 @@ func TestGetString(t *testing.T) {
 }
 
 func TestGetBool(t *testing.T) {
-	hash := HashFromMap(testMap, nil, nil)
+	hash := HashFromMap(testMap)
 	tests := []getTest{
 		{[]string{"bool"}, true, false},
 		{[]string{"bool_f"}, false, false},

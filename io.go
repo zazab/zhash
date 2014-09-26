@@ -11,16 +11,19 @@ import (
 type Unmarshaller func([]byte, interface{}) error
 type Marshaller func(interface{}) ([]byte, error)
 
+// Sets function for marshalling via Hash.WriteHash(fd)
 func (h *Hash) SetMarshallerFunc(fu Marshaller) {
 	h.marshal = fu
 }
 
+// Set function for unmarshalling via Hash.ReadHash
 func (h *Hash) SetUnmarshallerFunc(fu Unmarshaller) {
 	h.unmarshal = fu
 }
 
-func (c *Hash) ReadHash(r io.Reader) error {
-	if c.unmarshal == nil {
+// Unmarshall hash from given io.Reader using function setted via zhash.Hash.SetUnmarshaller
+func (h *Hash) ReadHash(r io.Reader) error {
+	if h.unmarshal == nil {
 		return errors.New("Cannot unmarshal. No unmarshaller set")
 	}
 
@@ -29,16 +32,17 @@ func (c *Hash) ReadHash(r io.Reader) error {
 		return err
 	}
 
-	err = c.unmarshal(b, &c.data)
+	err = h.unmarshal(b, &h.data)
 	return err
 }
 
-func (c Hash) WriteHash(w io.Writer) error {
-	if c.marshal == nil {
+// Mashall hash using supplied Marshaller function and writes it to w
+func (h Hash) WriteHash(w io.Writer) error {
+	if h.marshal == nil {
 		return errors.New("Cannot marshal hash. No marshaller set")
 	}
 
-	b, err := c.marshal(c.data)
+	b, err := h.marshal(h.data)
 	if err != nil {
 		return err
 	}
@@ -47,14 +51,15 @@ func (c Hash) WriteHash(w io.Writer) error {
 	return err
 }
 
-func (c Hash) Reader() io.Reader {
+func (h Hash) Reader() (io.Reader, error) {
 	var buff bytes.Buffer
-	c.WriteHash(&buff)
-	return &buff
+	err := h.WriteHash(&buff)
+	return &buff, err
 }
 
-func (c Hash) String() string {
-	buf, err := json.MarshalIndent(c, "", "  ")
+// Returns indented json with your map
+func (h Hash) String() string {
+	buf, err := json.MarshalIndent(h, "", "  ")
 	if err != nil {
 		return "Error converting config to json"
 	}

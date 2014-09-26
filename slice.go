@@ -6,8 +6,10 @@ import (
 	"strings"
 )
 
+// Retrieves []interface{} from hash. Will fail if target slice have different
+// type ([]int for example).
 func (h Hash) GetSlice(path ...string) ([]interface{}, error) {
-	m := h.GetPath(path...)
+	m := h.Get(path...)
 	if m == nil {
 		return []interface{}{}, notFoundError{path}
 	}
@@ -21,8 +23,11 @@ func (h Hash) GetSlice(path ...string) ([]interface{}, error) {
 	}
 }
 
+// Returns []int64 if any of []int, []int64 or []interface{} is found under the
+// path. If target is []interface{} it will fails to convert if type of any
+// element is not int or int64.
 func (h Hash) GetIntSlice(path ...string) ([]int64, error) {
-	m := h.GetPath(path...)
+	m := h.Get(path...)
 	if m == nil {
 		return []int64{}, notFoundError{path}
 	}
@@ -58,7 +63,7 @@ func (h Hash) GetIntSlice(path ...string) ([]int64, error) {
 }
 
 func (h Hash) GetFloatSlice(path ...string) ([]float64, error) {
-	m := h.GetPath(path...)
+	m := h.Get(path...)
 	if m == nil {
 		return []float64{}, notFoundError{path}
 	}
@@ -87,7 +92,7 @@ func (h Hash) GetFloatSlice(path ...string) ([]float64, error) {
 }
 
 func (h Hash) GetStringSlice(path ...string) ([]string, error) {
-	m := h.GetPath(path...)
+	m := h.Get(path...)
 	if m == nil {
 		return []string{}, notFoundError{path}
 	}

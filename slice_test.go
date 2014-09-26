@@ -15,7 +15,7 @@ func copyTestMap() map[string]interface{} {
 }
 
 func TestGetSlice(t *testing.T) {
-	hash := HashFromMap(testMap, nil, nil)
+	hash := HashFromMap(testMap)
 	tests := []getTest{
 		{[]string{"strISlice"}, []interface{}{"a", "b", "c"}, false},
 		{[]string{"int"}, []interface{}{}, true},
@@ -30,7 +30,7 @@ func TestGetSlice(t *testing.T) {
 }
 
 func TestGetIntSlice(t *testing.T) {
-	hash := HashFromMap(testMap, nil, nil)
+	hash := HashFromMap(testMap)
 	tests := []getTest{
 		{[]string{"intSlice"}, []int64{10, 12, 14}, false},
 		{[]string{"int64Slice"}, []int64{20, 22, 24}, false},
@@ -48,7 +48,7 @@ func TestGetIntSlice(t *testing.T) {
 }
 
 func TestGetFloatSlice(t *testing.T) {
-	hash := HashFromMap(testMap, nil, nil)
+	hash := HashFromMap(testMap)
 	tests := []getTest{
 		{[]string{"fltSlice"}, []float64{40.1, 42.2, 44.3}, false},
 		{[]string{"fltISlice"}, []float64{50.1, 52.2, 54.3}, false},
@@ -65,7 +65,7 @@ func TestGetFloatSlice(t *testing.T) {
 }
 
 func TestGetStringSlice(t *testing.T) {
-	hash := HashFromMap(testMap, nil, nil)
+	hash := HashFromMap(testMap)
 	tests := []getTest{
 		{[]string{"strSlice"}, []string{"a", "b", "c"}, false},
 		{[]string{"strISlice"}, []string{"a", "b", "c"}, false},
@@ -112,7 +112,7 @@ func TestAppendSlice(t *testing.T) {
 		{1, getTest{[]string{"fltSlice"}, []interface{}{}, true}},
 	}
 
-	hash := HashFromMap(copyTestMap(), nil, nil)
+	hash := HashFromMap(copyTestMap())
 
 	for i, test := range tests {
 		var err error
@@ -139,7 +139,7 @@ func TestAppendIntSlice(t *testing.T) {
 		{int64(1), getTest{[]string{"fltSlice"}, []int64{}, true}},
 	}
 
-	hash := HashFromMap(copyTestMap(), nil, nil)
+	hash := HashFromMap(copyTestMap())
 
 	for i, test := range tests {
 		var err error
@@ -164,7 +164,7 @@ func TestAppendFloatSlice(t *testing.T) {
 		{1.5, getTest{[]string{"intSlice"}, []float64{}, true}},
 	}
 
-	hash := HashFromMap(copyTestMap(), nil, nil)
+	hash := HashFromMap(copyTestMap())
 
 	for i, test := range tests {
 		var err error
@@ -189,7 +189,7 @@ func TestAppendStringSlice(t *testing.T) {
 		{"m", getTest{[]string{"fltSlice"}, []string{}, true}},
 	}
 
-	hash := HashFromMap(copyTestMap(), nil, nil)
+	hash := HashFromMap(copyTestMap())
 
 	for i, test := range tests {
 		var err error

@@ -12,12 +12,15 @@ type Hash struct {
 	unmarshal Unmarshaller
 }
 
-func NewHash(m Marshaller, u Unmarshaller) Hash {
-	return Hash{map[string]interface{}{}, m, u}
+func NewHash() Hash {
+	return Hash{map[string]interface{}{}, nil, nil}
 }
 
-func HashFromMap(ma map[string]interface{}, m Marshaller, u Unmarshaller) Hash {
-	return Hash{ma, m, u}
+// Loads existing map[string]interface{} to Hash. Marshaller and Unmarshallers
+// are optional, if you don't need it pass nil to them. You can set (or change)
+// them later using Hash.SetMarshaller and Hash.SetUnmarshaller.
+func HashFromMap(ma map[string]interface{}) Hash {
+	return Hash{ma, nil, nil}
 }
 
 type notFoundError struct {
@@ -28,13 +31,11 @@ func (e notFoundError) Error() string {
 	return fmt.Sprintf("Value for %s not found", strings.Join(e.path, "."))
 }
 
+// Check if given err represents zhash "Not Found" error. Great for checking if
+// asked value is zero or just not set.
 func IsNotFound(err error) bool {
 	_, ok := err.(notFoundError)
 	return ok
-}
-
-func (h Hash) SetPath(value interface{}, path string) {
-	h.Set(value, strings.Split(path, ".")...)
 }
 
 func (h Hash) Set(value interface{}, path ...string) {
@@ -65,7 +66,7 @@ func (h Hash) Delete(path ...string) error {
 
 	elemPath := path[l-1]
 	parentPath := path[:l-1]
-	parent := h.GetPath(parentPath...)
+	parent := h.Get(parentPath...)
 
 	if parent == nil {
 		return notFoundError{path}
@@ -82,7 +83,8 @@ func (h Hash) Delete(path ...string) error {
 	}
 }
 
-func (h Hash) GetPath(path ...string) interface{} {
+// Retrieves value from hash returns nil if nothing found
+func (h Hash) Get(path ...string) interface{} {
 	ptr := h.data
 	for i, p := range path {
 		if i == len(path)-1 {
@@ -100,8 +102,15 @@ func (h Hash) GetPath(path ...string) interface{} {
 	return nil
 }
 
+// Returns root map[string]interface{}
+func (h Hash) GetRoot() map[string]interface{} {
+	return h.data
+}
+
+// Retrieves map[string]interface{} returns error if any can not convert
+// target value, or value doesn't found
 func (h Hash) GetMap(path ...string) (map[string]interface{}, error) {
-	m := h.GetPath(path...)
+	m := h.Get(path...)
 	if m == nil {
 		return map[string]interface{}{}, notFoundError{path}
 	}
@@ -116,7 +125,7 @@ func (h Hash) GetMap(path ...string) (map[string]interface{}, error) {
 }
 
 func (h Hash) GetString(path ...string) (string, error) {
-	m := h.GetPath(path...)
+	m := h.Get(path...)
 	if m == nil {
 		return "", notFoundError{path}
 	}
@@ -130,7 +139,7 @@ func (h Hash) GetString(path ...string) (string, error) {
 }
 
 func (h Hash) GetBool(path ...string) (bool, error) {
-	m := h.GetPath(path...)
+	m := h.Get(path...)
 	if m == nil {
 		return false, notFoundError{path}
 	}
@@ -144,7 +153,7 @@ func (h Hash) GetBool(path ...string) (bool, error) {
 }
 
 func (h Hash) GetInt(path ...string) (int64, error) {
-	m := h.GetPath(path...)
+	m := h.Get(path...)
 	if m == nil {
 		return 0, notFoundError{path}
 	}
@@ -160,7 +169,7 @@ func (h Hash) GetInt(path ...string) (int64, error) {
 }
 
 func (h Hash) GetFloat(path ...string) (float64, error) {
-	m := h.GetPath(path...)
+	m := h.Get(path...)
 	if m == nil {
 		return 0, notFoundError{path}
 	}
