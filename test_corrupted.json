@@ -1,0 +1,13 @@
+{
+    "float": 10.1,
+    "int": 10,
+    "bool": true,
+    "bool_f": false,
+    "string": "some text",
+    "intSlice": [10, 12, 14],
+    "strSlice": ["a", "b", "c"]
+    "map": {
+        "val1": 10,
+        "val2": 11
+    }
+}
