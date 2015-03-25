@@ -15,6 +15,12 @@ func main() {
 Then fill it from toml:
 
 ```golang
+    func tomlUnmarshal(b []byte, v interface{}) error {
+	    _, err := toml.Decode(string(b), v)
+	    return err
+    }
+
+    hash.SetUnmarshaller(tomlUnmarshal)
     hash.ReadHash(reader)
 ```
 
