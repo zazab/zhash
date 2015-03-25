@@ -142,6 +142,23 @@ func (h Hash) GetHash(path ...string) (Hash, error) {
 	}
 }
 
+// Returns root keys of Hash
+func (h Hash) Keys() []string {
+	keys := make([]string, len(h.data))
+	i := 0
+	for k, _ := range h.data {
+		keys[i] = k
+		i++
+	}
+
+	return keys
+}
+
+// Returns len of root map
+func (h Hash) Len() int {
+	return len(h.data)
+}
+
 func (h Hash) GetString(path ...string) (string, error) {
 	m := h.Get(path...)
 	if m == nil {
