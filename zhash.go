@@ -108,7 +108,8 @@ func (h Hash) GetRoot() map[string]interface{} {
 }
 
 // Retrieves map[string]interface{} returns error if any can not convert
-// target value, or value doesn't found
+// target value, or value doesn't found. If not found, returns empty
+// Hash, not nil
 func (h Hash) GetMap(path ...string) (map[string]interface{}, error) {
 	m := h.Get(path...)
 	if m == nil {
@@ -121,6 +122,23 @@ func (h Hash) GetMap(path ...string) (map[string]interface{}, error) {
 		return map[string]interface{}{},
 			errors.New(fmt.Sprintf("Error converting %s to map",
 				strings.Join(path, ".")))
+	}
+}
+
+// Retrieves map[string]interface{} and converts it to Hash. Returns error if
+// can not convert target value, or value doesn'n found. If not found returns
+// emty map[string]interface{} not nil
+func (h Hash) GetHash(path ...string) (Hash, error) {
+	m := h.Get(path...)
+	if m == nil {
+		return NewHash(), notFoundError{path}
+	}
+	switch val := m.(type) {
+	case map[string]interface{}:
+		return HashFromMap(val), nil
+	default:
+		return NewHash(),
+			fmt.Errorf("Error converting %s to map", strings.Join(path, "."))
 	}
 }
 
