@@ -1,7 +1,6 @@
 package zhash
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -17,9 +16,9 @@ func (h Hash) GetSlice(path ...string) ([]interface{}, error) {
 	case []interface{}:
 		return val, nil
 	default:
-		return []interface{}{},
-			errors.New(fmt.Sprintf("Error converting %s to slice",
-				strings.Join(path, ".")))
+		return []interface{}{}, fmt.Errorf(
+			"Error converting %s to slice", strings.Join(path, "."),
+		)
 	}
 }
 
@@ -49,16 +48,18 @@ func (h Hash) GetIntSlice(path ...string) ([]int64, error) {
 			case int64:
 				sl = append(sl, i)
 			default:
-				return []int64{}, errors.New(
-					fmt.Sprintf("Error converting %s to []int64, "+
-						"slice have not int elements", strings.Join(path, ".")))
+				return []int64{}, fmt.Errorf(
+					"Error converting %s to []int64, "+
+						"slice have not int elements",
+					strings.Join(path, "."),
+				)
 			}
 		}
 		return sl, nil
 	default:
-		return []int64{},
-			errors.New(fmt.Sprintf("Error converting %s to []int64",
-				strings.Join(path, ".")))
+		return []int64{}, fmt.Errorf(
+			"Error converting %s to []int64", strings.Join(path, "."),
+		)
 	}
 }
 
@@ -77,17 +78,19 @@ func (h Hash) GetFloatSlice(path ...string) ([]float64, error) {
 			case float64:
 				sl = append(sl, f)
 			default:
-				return []float64{}, errors.New(
-					fmt.Sprintf("Error converting %s to []float64, "+
+				return []float64{},
+					fmt.Errorf("Error converting %s to []float64, "+
 						"slice have not float elements",
-						strings.Join(path, ".")))
+						strings.Join(path, "."),
+					)
 			}
 		}
 		return sl, nil
 	default:
 		return []float64{},
-			errors.New(fmt.Sprintf("Error converting %s []float64",
-				strings.Join(path, ".")))
+			fmt.Errorf(
+				"Error converting %s []float64", strings.Join(path, "."),
+			)
 	}
 }
 
@@ -106,17 +109,18 @@ func (h Hash) GetStringSlice(path ...string) ([]string, error) {
 			case string:
 				sl = append(sl, s)
 			default:
-				return []string{}, errors.New(
-					fmt.Sprintf("Error converting %s to []string, "+
+				return []string{}, fmt.Errorf(
+					"Error converting %s to []string, "+
 						"slice have not string elements",
-						strings.Join(path, ".")))
+					strings.Join(path, "."),
+				)
 			}
 		}
 		return sl, nil
 	default:
-		return []string{},
-			errors.New(fmt.Sprintf("Error converting %s []string",
-				strings.Join(path, ".")))
+		return []string{}, fmt.Errorf(
+			"Error converting %s []string", strings.Join(path, "."),
+		)
 	}
 }
 
