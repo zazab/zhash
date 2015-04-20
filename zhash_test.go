@@ -57,6 +57,22 @@ func TestSet(t *testing.T) {
 	}
 }
 
+func TestSetRoot(t *testing.T) {
+	m := map[string]interface{}{"initKey": "initValue"}
+	hash := HashFromMap(m)
+
+	testRoot := map[string]interface{}{
+		"blahKey": "blahValue",
+	}
+
+	hash.SetRoot(testRoot)
+
+	val := hash.GetRoot()
+	if !reflect.DeepEqual(val, testRoot) {
+		t.Errorf("%#v != %#v", val, testRoot)
+	}
+}
+
 func TestDelete(t *testing.T) {
 	hash := HashFromMap(testMap)
 	err := hash.Delete("toDel")
