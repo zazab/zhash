@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"zhash"
+
+	"github.com/zazab/zhash"
 )
 
 // Example HashFromMap shows how to initialize your hash from map
