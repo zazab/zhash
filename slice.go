@@ -17,7 +17,7 @@ func (h Hash) GetSlice(path ...string) ([]interface{}, error) {
 		return val, nil
 	default:
 		return []interface{}{}, fmt.Errorf(
-			"Error converting %s to slice", strings.Join(path, "."),
+			"cannot convert %s to slice", strings.Join(path, "."),
 		)
 	}
 }
@@ -49,7 +49,7 @@ func (h Hash) GetIntSlice(path ...string) ([]int64, error) {
 				sl = append(sl, i)
 			default:
 				return []int64{}, fmt.Errorf(
-					"Error converting %s to []int64, "+
+					"cannot convert %s to []int64, "+
 						"slice have not int elements",
 					strings.Join(path, "."),
 				)
@@ -58,7 +58,7 @@ func (h Hash) GetIntSlice(path ...string) ([]int64, error) {
 		return sl, nil
 	default:
 		return []int64{}, fmt.Errorf(
-			"Error converting %s to []int64", strings.Join(path, "."),
+			"cannot convert %s to []int64", strings.Join(path, "."),
 		)
 	}
 }
@@ -78,19 +78,18 @@ func (h Hash) GetFloatSlice(path ...string) ([]float64, error) {
 			case float64:
 				sl = append(sl, f)
 			default:
-				return []float64{},
-					fmt.Errorf("Error converting %s to []float64, "+
+				return []float64{}, fmt.Errorf(
+					"cannot convert %s to []float64, "+
 						"slice have not float elements",
-						strings.Join(path, "."),
-					)
+					strings.Join(path, "."),
+				)
 			}
 		}
 		return sl, nil
 	default:
-		return []float64{},
-			fmt.Errorf(
-				"Error converting %s []float64", strings.Join(path, "."),
-			)
+		return []float64{}, fmt.Errorf(
+			"cannot convert %s []float64", strings.Join(path, "."),
+		)
 	}
 }
 
@@ -110,7 +109,7 @@ func (h Hash) GetStringSlice(path ...string) ([]string, error) {
 				sl = append(sl, s)
 			default:
 				return []string{}, fmt.Errorf(
-					"Error converting %s to []string, "+
+					"cannot convert %s to []string, "+
 						"slice have not string elements",
 					strings.Join(path, "."),
 				)
@@ -119,7 +118,7 @@ func (h Hash) GetStringSlice(path ...string) ([]string, error) {
 		return sl, nil
 	default:
 		return []string{}, fmt.Errorf(
-			"Error converting %s []string", strings.Join(path, "."),
+			"cannot convert %s []string", strings.Join(path, "."),
 		)
 	}
 }

@@ -24,7 +24,7 @@ func (h *Hash) SetUnmarshallerFunc(fu Unmarshaller) {
 // Unmarshall hash from given io.Reader using function setted via zhash.Hash.SetUnmarshaller
 func (h *Hash) ReadHash(r io.Reader) error {
 	if h.unmarshal == nil {
-		return errors.New("Cannot unmarshal. No unmarshaller set")
+		return errors.New("cannot unmarshal, no unmarshaller set")
 	}
 
 	b, err := ioutil.ReadAll(r)
@@ -39,7 +39,7 @@ func (h *Hash) ReadHash(r io.Reader) error {
 // Mashall hash using supplied Marshaller function and writes it to w
 func (h Hash) WriteHash(w io.Writer) error {
 	if h.marshal == nil {
-		return errors.New("Cannot marshal hash. No marshaller set")
+		return errors.New("cannot marshal hash, no marshaller set")
 	}
 
 	b, err := h.marshal(h.data)
@@ -61,7 +61,7 @@ func (h Hash) Reader() (io.Reader, error) {
 func (h Hash) String() string {
 	buf, err := json.MarshalIndent(h, "", "  ")
 	if err != nil {
-		return "Error converting config to json"
+		return "error converting config to json"
 	}
 
 	return string(buf)
