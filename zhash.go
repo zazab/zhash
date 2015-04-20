@@ -57,6 +57,10 @@ func (h Hash) Set(value interface{}, path ...string) {
 	ptr[key] = value
 }
 
+func (h *Hash) SetRoot(value map[string]interface{}) {
+	h.data = value
+}
+
 func (h Hash) Delete(path ...string) error {
 	l := len(path)
 	if l == 1 {
