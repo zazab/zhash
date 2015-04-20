@@ -40,7 +40,7 @@ func IsNotFound(err error) bool {
 
 func (h Hash) Set(value interface{}, path ...string) {
 	key := ""
-	ptr := map[string]interface{}(h.data)
+	ptr := h.data
 	for i, p := range path {
 		if i < len(path)-1 { // middle element
 			switch node := ptr[p].(type) {
