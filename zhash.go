@@ -79,7 +79,8 @@ func (h Hash) Delete(path ...string) error {
 		return fmt.Errorf(
 			"cannot delete key %s from %T, "+
 				"expected map[string]interface{}",
-			parent)
+			strings.Join(path, "."), parent,
+		)
 	}
 }
 
