@@ -1,7 +1,6 @@
 package zhash
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -28,7 +27,7 @@ type notFoundError struct {
 }
 
 func (e notFoundError) Error() string {
-	return fmt.Sprintf("Value for %s not found", strings.Join(e.path, "."))
+	return fmt.Sprintf("value for %s not found", strings.Join(e.path, "."))
 }
 
 // Check if given err represents zhash "Not Found" error. Great for checking if
@@ -40,7 +39,7 @@ func IsNotFound(err error) bool {
 
 func (h Hash) Set(value interface{}, path ...string) {
 	key := ""
-	ptr := map[string]interface{}(h.data)
+	ptr := h.data
 	for i, p := range path {
 		if i < len(path)-1 { // middle element
 			switch node := ptr[p].(type) {
@@ -77,9 +76,11 @@ func (h Hash) Delete(path ...string) error {
 		delete(val, elemPath)
 		return nil
 	default:
-		errmsg := fmt.Sprintf("Cannot delete key %s from %T, "+
-			"expected map[string]interface{}", parent)
-		return errors.New(errmsg)
+		return fmt.Errorf(
+			"cannot delete key %s from %T, "+
+				"expected map[string]interface{}",
+			strings.Join(path, "."), parent,
+		)
 	}
 }
 
@@ -119,9 +120,9 @@ func (h Hash) GetMap(path ...string) (map[string]interface{}, error) {
 	case map[string]interface{}:
 		return val, nil
 	default:
-		return map[string]interface{}{},
-			errors.New(fmt.Sprintf("Error converting %s to map",
-				strings.Join(path, ".")))
+		return map[string]interface{}{}, fmt.Errorf(
+			"cannot convert %s to map", strings.Join(path, "."),
+		)
 	}
 }
 
@@ -137,8 +138,9 @@ func (h Hash) GetHash(path ...string) (Hash, error) {
 	case map[string]interface{}:
 		return HashFromMap(val), nil
 	default:
-		return NewHash(),
-			fmt.Errorf("Error converting %s to map", strings.Join(path, "."))
+		return NewHash(), fmt.Errorf(
+			"cannot convert %s to map", strings.Join(path, "."),
+		)
 	}
 }
 
@@ -168,8 +170,9 @@ func (h Hash) GetString(path ...string) (string, error) {
 	case string:
 		return val, nil
 	default:
-		return "", errors.New(fmt.Sprintf("Error converting %s to string",
-			strings.Join(path, ".")))
+		return "", fmt.Errorf(
+			"cannot convert %s to string", strings.Join(path, "."),
+		)
 	}
 }
 
@@ -182,8 +185,9 @@ func (h Hash) GetBool(path ...string) (bool, error) {
 	case bool:
 		return val, nil
 	default:
-		return false, errors.New(fmt.Sprintf("Error converting %s to bool",
-			strings.Join(path, ".")))
+		return false, fmt.Errorf(
+			"cannot convert %s to bool", strings.Join(path, "."),
+		)
 	}
 }
 
@@ -198,8 +202,9 @@ func (h Hash) GetInt(path ...string) (int64, error) {
 	case int64:
 		return val, nil
 	default:
-		return 0, errors.New(fmt.Sprintf("Error converting %s to int",
-			strings.Join(path, ".")))
+		return 0, fmt.Errorf(
+			"cannot convert %s to int", strings.Join(path, "."),
+		)
 	}
 }
 
@@ -216,7 +221,8 @@ func (h Hash) GetFloat(path ...string) (float64, error) {
 	case int64:
 		return float64(val), nil
 	default:
-		return 0, errors.New(fmt.Sprintf("Error converting %s to float",
-			strings.Join(path, ".")))
+		return 0, fmt.Errorf(
+			"cannot convert %s to float", strings.Join(path, "."),
+		)
 	}
 }
