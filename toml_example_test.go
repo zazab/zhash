@@ -3,9 +3,9 @@ package zhash_test
 import (
 	"bytes"
 	"fmt"
-	"zhash"
 
 	"github.com/BurntSushi/toml"
+	"github.com/zazab/zhash"
 )
 
 func unmarshalToml(d []byte, t interface{}) error {
