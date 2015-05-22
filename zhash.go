@@ -94,7 +94,7 @@ func (h Hash) Get(path ...string) interface{} {
 	for i, p := range path {
 		if i == len(path)-1 {
 			if node, ok := ptr[p].(map[interface{}]interface{}); ok {
-				return convertFromYaml(node)
+				return convertToMapString(node)
 			}
 			return ptr[p]
 		}
@@ -103,7 +103,7 @@ func (h Hash) Get(path ...string) interface{} {
 		case map[string]interface{}:
 			ptr = node
 		case map[interface{}]interface{}:
-			ptr = convertFromYaml(node)
+			ptr = convertToMapString(node)
 		default:
 			return nil
 		}
@@ -112,7 +112,7 @@ func (h Hash) Get(path ...string) interface{} {
 	return nil
 }
 
-func convertFromYaml(node map[interface{}]interface{}) map[string]interface{} {
+func convertToMapString(node map[interface{}]interface{}) map[string]interface{} {
 	convertedNode := make(map[string]interface{})
 	for key, val := range node {
 		if keystr, ok := key.(string); ok {
