@@ -123,23 +123,23 @@ func (h Hash) GetStringSlice(path ...string) ([]string, error) {
 	}
 }
 
-func (h Hash) GetMapSlice(path ...string) ([]map[string]interface{}, error) {
-	m := h.Get(path...)
-	if m == nil {
+func (hash Hash) GetMapSlice(path ...string) ([]map[string]interface{}, error) {
+	node := hash.Get(path...)
+	if node == nil {
 		return []map[string]interface{}{}, notFoundError{path}
 	}
-	switch val := m.(type) {
+	switch val := node.(type) {
 	case []map[string]interface{}:
 		return val, nil
 	case []interface{}:
 		result := []map[string]interface{}{}
 		for _, elem := range val {
-			switch e := elem.(type) {
+			switch typedElem := elem.(type) {
 			case map[string]interface{}:
-				result = append(result, e)
+				result = append(result, typedElem)
 			case map[interface{}]interface{}:
 				newMap := make(map[string]interface{})
-				for key, value := range e {
+				for key, value := range typedElem {
 					if newKey, ok := key.(string); ok {
 						newMap[newKey] = value
 					}
@@ -223,8 +223,8 @@ func (h Hash) AppendStringSlice(val string, path ...string) error {
 	return nil
 }
 
-func (h Hash) AppendMapSlice(val map[string]interface{}, path ...string) error {
-	slice, err := h.GetMapSlice(path...)
+func (hash Hash) AppendMapSlice(val map[string]interface{}, path ...string) error {
+	slice, err := hash.GetMapSlice(path...)
 	if err != nil {
 		if !IsNotFound(err) {
 			return err
@@ -233,6 +233,6 @@ func (h Hash) AppendMapSlice(val map[string]interface{}, path ...string) error {
 
 	slice = append(slice, val)
 
-	h.Set(slice, path...)
+	hash.Set(slice, path...)
 	return nil
 }
