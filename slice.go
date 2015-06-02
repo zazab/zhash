@@ -123,6 +123,51 @@ func (h Hash) GetStringSlice(path ...string) ([]string, error) {
 	}
 }
 
+func (h Hash) GetMapSlice(path ...string) ([]map[string]interface{}, error) {
+	m := h.Get(path...)
+	if m == nil {
+		return []map[string]interface{}{}, notFoundError{path}
+	}
+	switch val := m.(type) {
+	case []map[string]interface{}:
+		return val, nil
+	case []interface{}:
+		result := []map[string]interface{}{}
+		for _, elem := range val {
+			switch e := elem.(type) {
+			case map[string]interface{}:
+				result = append(result, e)
+			case map[interface{}]interface{}:
+				newMap := make(map[string]interface{})
+				for key, value := range e {
+					if newKey, ok := key.(string); ok {
+						newMap[newKey] = value
+					}
+				}
+				result = append(result, newMap)
+			default:
+			}
+		}
+		return result, nil
+	case []map[interface{}]interface{}:
+		result := []map[string]interface{}{}
+		for _, sourceMap := range val {
+			newMap := make(map[string]interface{})
+			for key, value := range sourceMap {
+				if newKey, ok := key.(string); ok {
+					newMap[newKey] = value
+				}
+			}
+			result = append(result, newMap)
+		}
+		return result, nil
+	default:
+		return []map[string]interface{}{}, fmt.Errorf(
+			"cannot convert %s []map[string]interface{}", strings.Join(path, "."),
+		)
+	}
+}
+
 func (h Hash) AppendSlice(val interface{}, path ...string) error {
 	slice, err := h.GetSlice(path...)
 	if err != nil {
@@ -166,6 +211,20 @@ func (h Hash) AppendFloatSlice(val float64, path ...string) error {
 
 func (h Hash) AppendStringSlice(val string, path ...string) error {
 	slice, err := h.GetStringSlice(path...)
+	if err != nil {
+		if !IsNotFound(err) {
+			return err
+		}
+	}
+
+	slice = append(slice, val)
+
+	h.Set(slice, path...)
+	return nil
+}
+
+func (h Hash) AppendMapSlice(val map[string]interface{}, path ...string) error {
+	slice, err := h.GetMapSlice(path...)
 	if err != nil {
 		if !IsNotFound(err) {
 			return err
