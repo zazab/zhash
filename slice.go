@@ -146,6 +146,7 @@ func (hash Hash) GetMapSlice(path ...string) ([]map[string]interface{}, error) {
 				}
 				result = append(result, newMap)
 			default:
+				// do nothing
 			}
 		}
 		return result, nil
@@ -163,7 +164,7 @@ func (hash Hash) GetMapSlice(path ...string) ([]map[string]interface{}, error) {
 		return result, nil
 	default:
 		return []map[string]interface{}{}, fmt.Errorf(
-			"cannot convert %s []map[string]interface{}", strings.Join(path, "."),
+			"cannot convert %s to []map[string]interface{}", strings.Join(path, "."),
 		)
 	}
 }
@@ -225,10 +226,8 @@ func (h Hash) AppendStringSlice(val string, path ...string) error {
 
 func (hash Hash) AppendMapSlice(val map[string]interface{}, path ...string) error {
 	slice, err := hash.GetMapSlice(path...)
-	if err != nil {
-		if !IsNotFound(err) {
-			return err
-		}
+	if err != nil && !IsNotFound(err) {
+		return err
 	}
 
 	slice = append(slice, val)
