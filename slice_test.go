@@ -1,6 +1,7 @@
 package zhash
 
 import (
+	"gopkg.in/yaml.v2"
 	"reflect"
 	"testing"
 )
@@ -78,6 +79,49 @@ func TestGetStringSlice(t *testing.T) {
 	for i, test := range tests {
 		s, err := hash.GetStringSlice(test.path...)
 		checkGet(i, test, s, err, "GetStringSlice", t)
+	}
+}
+
+func TestGetMapSlice(t *testing.T) {
+	testYaml := `
+deploy:
+        close: False
+        framework: 224
+        mysql: False
+        mongo: True
+        chmod:
+          - path: config/ssh/id_rsa
+            mode: 0600
+          - path: config/ssh/ngs_rsa
+            mode: 0600
+          - path: config/ssl_certs_dir
+            mode: 0600
+            dirmode: 0700
+            recursive: True
+        chown:
+          - path: config/ssh/ngs_rsa
+            user: www-data
+            group: www-logs
+          - path: config/secret_dir_for_www-data
+            user: www-data
+            recursive: True
+`
+	rawMap := make(map[string]interface{})
+
+	err := yaml.Unmarshal([]byte(testYaml), &rawMap)
+	if err != nil {
+		t.Errorf("Error yaml unmarshall: %s", err.Error())
+	}
+
+	hash := HashFromMap(rawMap)
+
+	result, err := hash.GetMapSlice("deploy", "chmod")
+	if err != nil {
+		t.Errorf("Error getting map slice: %s", err.Error())
+	}
+
+	for i := 0; i < 3; i++ {
+		t.Log(result[i]["path"])
 	}
 }
 

@@ -128,45 +128,24 @@ func (hash Hash) GetMapSlice(path ...string) ([]map[string]interface{}, error) {
 	if node == nil {
 		return []map[string]interface{}{}, notFoundError{path}
 	}
-	switch val := node.(type) {
-	case []map[string]interface{}:
-		return val, nil
-	case []interface{}:
-		result := []map[string]interface{}{}
-		for _, elem := range val {
-			switch typedElem := elem.(type) {
-			case map[string]interface{}:
-				result = append(result, typedElem)
-			case map[interface{}]interface{}:
-				newMap := make(map[string]interface{})
-				for key, value := range typedElem {
-					if newKey, ok := key.(string); ok {
-						newMap[newKey] = value
-					}
-				}
-				result = append(result, newMap)
-			default:
-				// do nothing
-			}
-		}
-		return result, nil
-	case []map[interface{}]interface{}:
-		result := []map[string]interface{}{}
-		for _, sourceMap := range val {
+	result := []map[string]interface{}{}
+	for _, elem := range node.([]interface{}) {
+		switch typedElem := elem.(type) {
+		case map[string]interface{}:
+			result = append(result, typedElem)
+		case map[interface{}]interface{}:
 			newMap := make(map[string]interface{})
-			for key, value := range sourceMap {
+			for key, value := range typedElem {
 				if newKey, ok := key.(string); ok {
 					newMap[newKey] = value
 				}
 			}
 			result = append(result, newMap)
+		default:
+			// do nothing
 		}
-		return result, nil
-	default:
-		return []map[string]interface{}{}, fmt.Errorf(
-			"cannot convert %s to []map[string]interface{}", strings.Join(path, "."),
-		)
 	}
+	return result, nil
 }
 
 func (h Hash) AppendSlice(val interface{}, path ...string) error {
