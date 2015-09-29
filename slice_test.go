@@ -110,14 +110,14 @@ deploy:
 
 	err := yaml.Unmarshal([]byte(testYaml), &rawMap)
 	if err != nil {
-		t.Errorf("Error yaml unmarshall: %s", err.Error())
+		t.Fatalf("Error yaml unmarshall: %s", err.Error())
 	}
 
 	hash := HashFromMap(rawMap)
 
 	result, err := hash.GetMapSlice("deploy", "chmod")
 	if err != nil {
-		t.Errorf("Error getting map slice: %s", err.Error())
+		t.Fatalf("Error getting map slice: %s", err.Error())
 	}
 
 	for i := 0; i < 3; i++ {
