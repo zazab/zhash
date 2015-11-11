@@ -15,6 +15,10 @@ func NewHash() Hash {
 	return Hash{map[string]interface{}{}, nil, nil}
 }
 
+func NewHashPtr() *Hash {
+	return &Hash{map[string]interface{}{}, nil, nil}
+}
+
 // Loads existing map[string]interface{} to Hash. Marshaller and Unmarshallers
 // are optional, if you don't need it pass nil to them. You can set (or change)
 // them later using Hash.SetMarshaller and Hash.SetUnmarshaller.
