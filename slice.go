@@ -123,6 +123,31 @@ func (h Hash) GetStringSlice(path ...string) ([]string, error) {
 	}
 }
 
+func (hash Hash) GetMapSlice(path ...string) ([]map[string]interface{}, error) {
+	node := hash.Get(path...)
+	if node == nil {
+		return []map[string]interface{}{}, notFoundError{path}
+	}
+	result := []map[string]interface{}{}
+	for _, elem := range node.([]interface{}) {
+		switch typedElem := elem.(type) {
+		case map[string]interface{}:
+			result = append(result, typedElem)
+		case map[interface{}]interface{}:
+			newMap := make(map[string]interface{})
+			for key, value := range typedElem {
+				if newKey, ok := key.(string); ok {
+					newMap[newKey] = value
+				}
+			}
+			result = append(result, newMap)
+		default:
+			// do nothing
+		}
+	}
+	return result, nil
+}
+
 func (h Hash) AppendSlice(val interface{}, path ...string) error {
 	slice, err := h.GetSlice(path...)
 	if err != nil {
@@ -175,5 +200,17 @@ func (h Hash) AppendStringSlice(val string, path ...string) error {
 	slice = append(slice, val)
 
 	h.Set(slice, path...)
+	return nil
+}
+
+func (hash Hash) AppendMapSlice(val map[string]interface{}, path ...string) error {
+	slice, err := hash.GetMapSlice(path...)
+	if err != nil && !IsNotFound(err) {
+		return err
+	}
+
+	slice = append(slice, val)
+
+	hash.Set(slice, path...)
 	return nil
 }

@@ -97,18 +97,33 @@ func (h Hash) Get(path ...string) interface{} {
 	ptr := h.data
 	for i, p := range path {
 		if i == len(path)-1 {
+			if node, ok := ptr[p].(map[interface{}]interface{}); ok {
+				return convertToMapString(node)
+			}
 			return ptr[p]
 		}
 
 		switch node := ptr[p].(type) {
 		case map[string]interface{}:
 			ptr = node
+		case map[interface{}]interface{}:
+			ptr = convertToMapString(node)
 		default:
 			return nil
 		}
 	}
 
 	return nil
+}
+
+func convertToMapString(node map[interface{}]interface{}) map[string]interface{} {
+	convertedNode := make(map[string]interface{})
+	for key, val := range node {
+		if keystr, ok := key.(string); ok {
+			convertedNode[keystr] = val
+		}
+	}
+	return convertedNode
 }
 
 // Returns root map[string]interface{}
