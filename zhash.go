@@ -49,6 +49,15 @@ func (h Hash) Set(value interface{}, path ...string) {
 			switch node := ptr[p].(type) {
 			case map[string]interface{}:
 				ptr = node
+			case map[interface{}]interface{}:
+				// golang yaml implementations parses data into
+				// map[interface{}]interface{}. zhash works with
+				// map[string]interface{}. So we need to  convert
+				// map[interface{}]interface{} to map[string]interface{}
+				// or it would be overwritten by empty map[string]interface{}
+				// on set attempt
+				ptr[p] = convertToMapString(node)
+				ptr = ptr[p].(map[string]interface{})
 			default:
 				ptr[p] = map[string]interface{}{}
 				ptr = ptr[p].(map[string]interface{})

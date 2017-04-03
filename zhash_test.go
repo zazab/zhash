@@ -3,6 +3,8 @@ package zhash
 import (
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var testMap = map[string]interface{}{
@@ -30,6 +32,36 @@ var testMap = map[string]interface{}{
 	"map2": map[string]interface{}{
 		"toDel": "a",
 	},
+}
+
+func TestYamlSet(t *testing.T) {
+	var (
+		assert = assert.New(t)
+
+		expectedMap = map[string]interface{}{
+			"foo": map[string]interface{}{
+				"bar": map[string]interface{}{
+					"baz":    10,
+					"foobar": 11,
+				},
+			},
+		}
+
+		hash = HashFromMap(map[string]interface{}{
+			"foo": map[interface{}]interface{}{
+				"bar": map[interface{}]interface{}{
+					"foobar": 11,
+				},
+			},
+		})
+	)
+
+	hash.Set(10, "foo", "bar", "baz")
+	assert.Equal(
+		expectedMap, hash.GetRoot(),
+		"should convert to map[string]interface{}",
+	)
+
 }
 
 func TestSet(t *testing.T) {
